@@ -3,24 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>快速英语课文背诵</title>
+  <title>快速背诵助手</title>
+  <link rel="icon" type="image/png" href="site-icon-32.png">
   <style>
     :root {
-      --ink: #111827;
-      --muted: #64748b;
-      --line: #cfe0f2;
-      --paper: #ffffff;
-      --wash: #f4f8fd;
-      --blue: #0b63e5;
-      --blue-soft: #eaf3ff;
-      --green: #15803d;
-      --green-soft: #e9f8ef;
-      --amber: #b45309;
-      --amber-soft: #fff3d7;
-      --rose: #be123c;
-      --rose-soft: #ffe8ee;
-      --teal: #0f766e;
-      --shadow: 0 18px 50px rgba(15, 73, 132, 0.12);
+      --ink: #f8fbff;
+      --muted: #b7c5d8;
+      --line: #274363;
+      --paper: #0d1728;
+      --wash: #132238;
+      --blue: #4f9cff;
+      --blue-soft: #102f5b;
+      --green: #22c55e;
+      --green-soft: #123923;
+      --amber: #fbbf24;
+      --amber-soft: #3b2b12;
+      --rose: #fb7185;
+      --rose-soft: #3d1722;
+      --teal: #2dd4bf;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
       --radius: 8px;
     }
 
@@ -31,9 +32,9 @@
       font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
       color: var(--ink);
       background:
-        radial-gradient(circle at 10% 0%, rgba(11, 99, 229, .16), transparent 28%),
-        radial-gradient(circle at 92% 4%, rgba(15, 159, 154, .13), transparent 24%),
-        linear-gradient(180deg, #f7fbff 0%, #eef7fb 100%);
+        radial-gradient(circle at 10% 0%, rgba(79, 156, 255, .18), transparent 28%),
+        radial-gradient(circle at 92% 4%, rgba(45, 212, 191, .12), transparent 24%),
+        linear-gradient(180deg, #08111f 0%, #0d1728 54%, #050b14 100%);
       min-height: 100vh;
     }
 
@@ -94,9 +95,34 @@
       display: grid;
       place-items: center;
       border-radius: 8px;
-      background: linear-gradient(135deg, #0b63e5, #10a7a7);
-      color: #fff;
-      font-weight: 900;
+      background: rgba(79, 156, 255, .12);
+      border: 1px solid rgba(79, 156, 255, .28);
+      overflow: hidden;
+    }
+
+    .brand-mark img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .theme-toggle {
+      min-height: 24px;
+      padding: 1px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--wash);
+      color: var(--ink);
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
     }
 
     h1, h2, h3, p { margin: 0; }
@@ -609,8 +635,8 @@
     }
 
     .lrc-box {
-      max-height: 132px;
-      min-height: 132px;
+      max-height: 158px;
+      min-height: 158px;
       display: grid;
       gap: 5px;
       overflow-y: auto;
@@ -693,18 +719,6 @@
       gap: 5px;
     }
 
-    .game-button-strip {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 5px;
-      align-items: stretch;
-    }
-
-    .game-button-strip > .choice-row,
-    .game-button-strip > .game-actions {
-      display: contents;
-    }
-
     .choice {
       font-size: 12px;
       min-height: 26px;
@@ -719,19 +733,6 @@
       background: var(--rose-soft);
       color: var(--rose);
       border-color: #f3a8ba;
-    }
-
-    .game-actions {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 5px;
-    }
-
-    .game-actions button {
-      min-height: 26px;
-      padding: 2px 6px;
-      font-size: 12px;
-      line-height: 1.1;
     }
 
     .progress {
@@ -768,6 +769,332 @@
     }
 
     .toast.show { opacity: 1; }
+
+    .compact-toolbar .toolbar-label,
+    .utility-panel,
+    .utility-body,
+    textarea,
+    input,
+    select,
+    .mini-file,
+    .stat,
+    .pill,
+    .mode-btn,
+    .lrc-line,
+    .reader,
+    .game-card,
+    .game-sentence,
+    .game-word,
+    .reference-panel details {
+      background: rgba(12, 27, 47, .96);
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .section,
+    .audio-panel {
+      background: linear-gradient(180deg, rgba(13, 28, 48, .96), rgba(8, 17, 31, .98));
+      border-color: var(--line);
+    }
+
+    .main-panel,
+    .sidebar {
+      background: rgba(8, 17, 31, .94);
+      border-color: var(--line);
+    }
+
+    .settings-toggle,
+    .mini-file label,
+    .speed-btn,
+    .stat span {
+      color: var(--muted);
+    }
+
+    .btn-soft {
+      background: #152941;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .btn-amber {
+      background: var(--amber-soft);
+      color: #fde68a;
+      border: 1px solid #7c5a1c;
+    }
+
+    .btn-rose {
+      background: var(--rose-soft);
+      color: #fecdd3;
+      border: 1px solid #7f1d2d;
+    }
+
+    .reference-panel summary,
+    .lrc-line.active,
+    .sentence.current {
+      background: rgba(16, 47, 91, .85);
+      color: #eaf6ff;
+    }
+
+    .reference-body {
+      color: #dbeafe;
+    }
+
+    .word.revealed {
+      color: var(--ink);
+    }
+
+    body.light-mode {
+      --ink: #111827;
+      --muted: #64748b;
+      --line: #cfe0f2;
+      --paper: #ffffff;
+      --wash: #f4f8fd;
+      --blue: #0b63e5;
+      --blue-soft: #eaf3ff;
+      --green: #15803d;
+      --green-soft: #e9f8ef;
+      --amber: #b45309;
+      --amber-soft: #fff3d7;
+      --rose: #be123c;
+      --rose-soft: #ffe8ee;
+      --teal: #0f766e;
+      --shadow: 0 18px 50px rgba(15, 73, 132, 0.12);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(11, 99, 229, .16), transparent 28%),
+        radial-gradient(circle at 92% 4%, rgba(15, 159, 154, .13), transparent 24%),
+        linear-gradient(180deg, #f7fbff 0%, #eef7fb 100%);
+    }
+
+    body.light-mode .compact-toolbar .toolbar-label,
+    body.light-mode .utility-panel,
+    body.light-mode .utility-body,
+    body.light-mode textarea,
+    body.light-mode input,
+    body.light-mode select,
+    body.light-mode .mini-file,
+    body.light-mode .stat,
+    body.light-mode .pill,
+    body.light-mode .mode-btn,
+    body.light-mode .lrc-line,
+    body.light-mode .reader,
+    body.light-mode .game-card,
+    body.light-mode .game-sentence,
+    body.light-mode .game-word,
+    body.light-mode .reference-panel details {
+      background: #ffffff;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    body.light-mode .section,
+    body.light-mode .audio-panel {
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(250,253,255,.96));
+      border-color: var(--line);
+    }
+
+    body.light-mode .main-panel,
+    body.light-mode .sidebar {
+      background: var(--paper);
+      border-color: var(--line);
+    }
+
+    body.light-mode .settings-toggle,
+    body.light-mode .mini-file label,
+    body.light-mode .speed-btn,
+    body.light-mode .stat span {
+      color: #334155;
+    }
+
+    body.light-mode .btn-soft {
+      background: var(--wash);
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    body.light-mode .btn-amber {
+      background: var(--amber-soft);
+      color: var(--amber);
+      border-color: #f3d899;
+    }
+
+    body.light-mode .btn-rose {
+      background: var(--rose-soft);
+      color: var(--rose);
+      border-color: #f3a8ba;
+    }
+
+    body.light-mode .reference-panel summary,
+    body.light-mode .lrc-line.active,
+    body.light-mode .sentence.current {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    body.light-mode .reference-body {
+      color: #334155;
+    }
+
+    .game-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .game-header h2 {
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .game-top-actions {
+      display: grid;
+      grid-template-columns: repeat(4, max-content);
+      gap: 7px;
+      justify-content: end;
+      align-items: center;
+    }
+
+    .game-top-actions button {
+      min-height: 26px;
+      padding: 2px 8px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .game-button-strip {
+      display: block;
+    }
+
+    .game-button-strip > .choice-row {
+      display: grid;
+    }
+
+    body.focus-game {
+      overflow: hidden;
+      background: #000;
+    }
+
+    body.focus-game .sidebar,
+    body.focus-game .topbar,
+    body.focus-game .workspace > div:first-child,
+    body.focus-game .game-section ~ .section,
+    body.focus-game .reference-panel {
+      display: none;
+    }
+
+    body.focus-game .app,
+    body.focus-game .main-panel,
+    body.focus-game .workspace,
+    body.focus-game .workspace > div,
+    body.focus-game .game-section {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      display: block;
+      border: 0;
+      box-shadow: none;
+      background: #000;
+    }
+
+    body.focus-game .app {
+      min-height: 100vh;
+    }
+
+    body.focus-game .game-section {
+      min-height: 100vh;
+      padding: clamp(12px, 3vw, 28px);
+      color: #fff;
+    }
+
+    body.focus-game .game-header {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      margin-bottom: clamp(12px, 2vw, 22px);
+    }
+
+    body.focus-game .game-header h2 {
+      font-size: clamp(22px, 4.8vw, 44px);
+      color: #fff;
+    }
+
+    body.focus-game .game-top-actions {
+      grid-template-columns: repeat(4, max-content);
+      gap: clamp(8px, 1.8vw, 18px);
+    }
+
+    body.focus-game .game-top-actions button {
+      min-height: clamp(34px, 5vw, 54px);
+      padding: 0 clamp(10px, 2vw, 22px);
+      font-size: clamp(14px, 2.1vw, 22px);
+      border-radius: 999px;
+    }
+
+    body.focus-game .game-card {
+      border: 0;
+      background: #000;
+      padding: 0;
+      gap: clamp(14px, 2.5vw, 26px);
+    }
+
+    body.focus-game .game-card .muted {
+      color: #dbeafe;
+      font-size: clamp(14px, 2.2vw, 24px);
+    }
+
+    body.focus-game .game-card #startGameBtn {
+      min-height: clamp(34px, 5vw, 54px);
+      padding: 0 clamp(14px, 2vw, 24px);
+      font-size: clamp(14px, 2.1vw, 22px);
+      border-radius: 999px;
+    }
+
+    body.focus-game .game-sentence {
+      min-height: clamp(168px, 30vh, 360px);
+      padding: clamp(14px, 3vw, 34px);
+      font-size: clamp(30px, 5.8vw, 76px);
+      line-height: 1.32;
+      color: #fff;
+      background: #050505;
+      border: 1px solid #1f2937;
+    }
+
+    body.focus-game .game-word {
+      margin: 0 .16em .28em 0;
+      padding: .02em .2em;
+      border-color: #475569;
+      background: #111827;
+    }
+
+    body.focus-game .game-word.pending {
+      min-width: 1.9em;
+      background: #1f2937;
+    }
+
+    body.focus-game .choice-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(14px, 4vw, 46px);
+      max-width: min(980px, 100%);
+      margin: 0 auto;
+    }
+
+    body.focus-game .choice {
+      min-height: clamp(68px, 13vw, 132px);
+      font-size: clamp(30px, 7.5vw, 92px);
+      border-radius: clamp(12px, 2vw, 24px);
+      background: #082f49;
+      color: #fff;
+      border: 2px solid #38bdf8;
+      box-shadow: 0 12px 32px rgba(14, 165, 233, .16);
+    }
+
+    body.focus-game .progress {
+      height: 12px;
+      background: #111827;
+      border-color: #374151;
+    }
 
     @media (max-width: 980px) {
       .workspace, .topbar {
@@ -818,7 +1145,7 @@
         grid-template-columns: repeat(2, 1fr);
       }
       .mode-group { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-      .choice-row, .game-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .choice-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .topbar {
         gap: 8px;
         margin-bottom: 8px;
@@ -852,10 +1179,13 @@
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark">R</div>
+        <div class="brand-mark"><img src="site-icon-32.png" alt=""></div>
         <div>
-          <h1>快速英语课文背诵</h1>
-          <p class="muted">Speed English Memorizer</p>
+          <div class="title-row">
+            <h1>快速背诵助手</h1>
+            <button class="theme-toggle" id="themeToggle" type="button">白模式</button>
+          </div>
+          <p class="muted">Speed Memorizer</p>
         </div>
       <div class="compact-toolbar">
         <button class="toolbar-label" id="loadLessonLabel" type="button">课程号</button>
@@ -944,8 +1274,16 @@
         </div>
 
         <div>
-          <section class="section">
-            <h2>背诵游戏</h2>
+          <section class="section game-section" id="gameSection">
+            <div class="game-header">
+              <h2>背诵游戏</h2>
+              <div class="game-top-actions">
+                <button class="btn-teal" id="repeatAudioBtn">听本句</button>
+                <button class="btn-amber" id="restartSentenceBtn">重来</button>
+                <button class="btn-rose" id="skipSentenceBtn">下一句</button>
+                <button class="btn-soft" id="focusGameBtn">专注模式</button>
+              </div>
+            </div>
             <div class="game-card">
               <div class="row" style="justify-content:space-between">
                 <p class="muted" id="gameStage">第一遍：看全句，点击每个词的正确首字母</p>
@@ -955,11 +1293,6 @@
               <div id="gameSentence" class="game-sentence">选择一句后开始。</div>
               <div class="game-button-strip">
                 <div id="choices" class="choice-row"></div>
-                <div class="game-actions">
-                  <button class="btn-teal" id="repeatAudioBtn">听本句</button>
-                  <button class="btn-amber" id="restartSentenceBtn">重来</button>
-                  <button class="btn-rose" id="skipSentenceBtn">下一句</button>
-                </div>
               </div>
             </div>
           </section>
@@ -1640,6 +1973,31 @@ At the school gate, Tom meets a boy named Jack. Jack says hello and shows him th
       if (audio.src) audio.play().catch(() => showToast("请先手动允许音频播放"));
     }
 
+    function setTheme(mode) {
+      const isLight = mode === "light";
+      document.body.classList.toggle("light-mode", isLight);
+      const btn = $("themeToggle");
+      if (btn) {
+        btn.textContent = isLight ? "黑模式" : "白模式";
+        btn.setAttribute("aria-pressed", String(isLight));
+      }
+      try {
+        localStorage.setItem("reciteTheme", isLight ? "light" : "dark");
+      } catch (error) {}
+    }
+
+    function setFocusGameMode(active) {
+      document.body.classList.toggle("focus-game", active);
+      const btn = $("focusGameBtn");
+      if (btn) btn.textContent = active ? "返回主页面" : "专注模式";
+      if (active && document.documentElement.requestFullscreen && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+      if (!active && document.exitFullscreen && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
     function formatTime(time) {
       const min = Math.floor(time / 60);
       const sec = Math.floor(time % 60);
@@ -1679,6 +2037,10 @@ At the school gate, Tom meets a boy named Jack. Jack says hello and shows him th
       $("settingsToggle").addEventListener("click", () => {
         const panel = $("settingsPanel");
         if (panel) panel.classList.toggle("open");
+      });
+      $("themeToggle").addEventListener("click", () => {
+        const nextMode = document.body.classList.contains("light-mode") ? "dark" : "light";
+        setTheme(nextMode);
       });
       $("loadLessonLabel").addEventListener("click", () => selectLesson($("lessonNumber").value));
       $("lessonNumber").addEventListener("input", () => {
@@ -1762,8 +2124,23 @@ At the school gate, Tom meets a boy named Jack. Jack says hello and shows him th
       $("restartSentenceBtn").addEventListener("click", () => startGame(1));
       $("skipSentenceBtn").addEventListener("click", () => moveSentence(1));
       $("repeatAudioBtn").addEventListener("click", repeatCurrentAudio);
+      $("focusGameBtn").addEventListener("click", () => {
+        const nextState = !document.body.classList.contains("focus-game");
+        setFocusGameMode(nextState);
+        if (nextState && !state.game.active) startGame(1);
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && document.body.classList.contains("focus-game")) {
+          setFocusGameMode(false);
+        }
+      });
     }
 
+    let savedTheme = "dark";
+    try {
+      savedTheme = localStorage.getItem("reciteTheme") || "dark";
+    } catch (error) {}
+    setTheme(savedTheme === "light" ? "light" : "dark");
     bindEvents();
     $("textInput").value = sampleText;
     state.lrc = parseLrc(sampleLrc);
