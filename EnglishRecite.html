@@ -1000,19 +1000,24 @@
     }
 
     body.focus-game .app {
-      min-height: 100vh;
+      min-height: 100dvh;
     }
 
     body.focus-game .game-section {
-      min-height: 100vh;
-      padding: clamp(12px, 3vw, 28px);
+      min-height: 100dvh;
+      padding: max(56px, env(safe-area-inset-top)) clamp(12px, 3vw, 28px) max(18px, env(safe-area-inset-bottom));
       color: #fff;
+      display: grid;
+      align-content: center;
     }
 
     body.focus-game .game-header {
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 12px;
       margin-bottom: clamp(12px, 2vw, 22px);
+      width: min(1040px, 100%);
+      margin-left: auto;
+      margin-right: auto;
     }
 
     body.focus-game .game-header h2 {
@@ -1037,6 +1042,8 @@
       background: #000;
       padding: 0;
       gap: clamp(14px, 2.5vw, 26px);
+      width: min(1040px, 100%);
+      margin: 0 auto;
     }
 
     body.focus-game .game-card .muted {
@@ -1171,6 +1178,21 @@
       }
       .game-sentence {
         font-size: 15px;
+      }
+      body.focus-game .game-section {
+        padding-top: max(72px, env(safe-area-inset-top));
+      }
+      body.focus-game .game-header {
+        grid-template-columns: minmax(72px, auto) minmax(0, 1fr);
+      }
+      body.focus-game .game-top-actions {
+        overflow-x: auto;
+        justify-content: start;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+      }
+      body.focus-game .game-top-actions::-webkit-scrollbar {
+        display: none;
       }
     }
   </style>
