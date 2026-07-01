@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LRC 手工标记工具</title>
+  <style>
+    :root {
+      --ink: #101828;
+      --muted: #667085;
+      --line: #cfe0f2;
+      --paper: #ffffff;
+      --wash: #f4f8fd;
+      --blue: #0b63e5;
+      --blue-soft: #eaf3ff;
+      --teal: #0f9f9a;
+      --green: #15803d;
+      --rose: #be123c;
+      --shadow: 0 18px 48px rgba(15, 73, 132, .12);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(11, 99, 229, .13), transparent 31%),
+        linear-gradient(180deg, #f6fbff 0%, #edf5fc 100%);
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      min-height: 38px;
+      border: 0;
+      border-radius: 7px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .14s ease, opacity .14s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fbfdff;
+      color: var(--ink);
+      padding: 9px 10px;
+    }
+
+    textarea {
+      min-height: 150px;
+      resize: vertical;
+      line-height: 1.55;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+    }
+
+    .app {
+      width: min(1220px, calc(100% - 20px));
+      margin: 10px auto;
+      display: grid;
+      grid-template-columns: 350px minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .panel {
+      background: rgba(255,255,255,.94);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .left {
+      position: sticky;
+      top: 10px;
+      align-self: start;
+      max-height: calc(100vh - 20px);
+      overflow: auto;
+    }
+
+    .brand {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 12px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #0b63e5, #0f9f9a);
+      color: #fff;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 20px; line-height: 1.25; }
+    h2 { font-size: 16px; margin-bottom: 9px; }
+    h3 { font-size: 14px; margin-bottom: 7px; }
+    .muted { color: var(--muted); font-size: 13px; line-height: 1.55; }
+
+    .course-row {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) 78px;
+      gap: 7px;
+      align-items: center;
+      margin-bottom: 9px;
+    }
+
+    .label-chip {
+      min-height: 39px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--wash);
+      font-size: 13px;
+      font-weight: 900;
+      color: #334155;
+    }
+
+    #lessonNumber {
+      text-align: center;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-soft { background: var(--wash); color: #334155; border: 1px solid var(--line); }
+    .btn-teal { background: var(--teal); color: #fff; }
+    .btn-green { background: #e9f8ef; color: var(--green); border: 1px solid #9ed7ad; }
+    .btn-rose { background: #ffe8ee; color: var(--rose); border: 1px solid #f3a8ba; }
+
+    .status {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      margin: 9px 0 12px;
+    }
+
+    .status span {
+      padding: 7px 8px;
+      border-radius: 999px;
+      background: var(--wash);
+      border: 1px solid var(--line);
+      font-size: 12px;
+      text-align: center;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .status .ok {
+      color: var(--green);
+      background: #ecfdf3;
+      border-color: #9ed7ad;
+      font-weight: 800;
+    }
+
+    .audio-card {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #bfd7f1;
+      background: linear-gradient(135deg, rgba(234,243,255,.98), rgba(255,255,255,.98));
+      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: .8fr .8fr 1fr 1.35fr 1fr;
+      gap: 5px;
+    }
+
+    audio {
+      grid-column: 1 / -1;
+      width: 100%;
+      height: 34px;
+      margin: 0 0 4px;
+    }
+
+    .speed-row {
+      display: grid;
+      grid-column: 1 / 3;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      align-items: center;
+      margin-bottom: 0;
+    }
+
+    .speed-row span {
+      display: none;
+    }
+
+    .audio-card > .actions.three {
+      grid-column: 3 / 6;
+      grid-template-columns: 1fr 1.35fr 1fr;
+      gap: 5px;
+      margin-top: 0;
+    }
+
+    .audio-card > .actions.three button {
+      min-height: 34px;
+      padding: 4px 5px;
+      font-size: 13px;
+      line-height: 1.05;
+    }
+
+    .speed-row button {
+      min-height: 34px;
+      padding: 4px 5px;
+      font-size: 13px;
+      line-height: 1.05;
+    }
+
+    .speed-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #334155;
+    }
+
+    .speed-btn.active {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+
+    .silence-card {
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--wash);
+      display: grid;
+      gap: 8px;
+    }
+
+    .silence-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .silence-actions button {
+      min-height: 34px;
+    }
+
+    .silence-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .silence-settings {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 7px;
+    }
+
+    .silence-list {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      max-height: 150px;
+      overflow: auto;
+    }
+
+    .silence-point {
+      min-height: 28px;
+      padding: 4px 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: #334155;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .time-grid {
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 9px;
+    }
+
+    .time-grid + .actions {
+      display: none;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    label {
+      color: #334155;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .actions.three {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .lesson-title {
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 3px;
+    }
+
+    .sentence-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .sentence-row {
+      display: grid;
+      grid-template-columns: 56px 180px minmax(0, 1fr) 180px;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px;
+    }
+
+    .sentence-row.current {
+      background: var(--blue-soft);
+      border-color: #8db9f4;
+      box-shadow: inset 4px 0 0 var(--blue);
+    }
+
+    .index {
+      font-weight: 900;
+      color: var(--blue);
+      text-align: center;
+    }
+
+    .sentence-time input {
+      font-family: Consolas, "Courier New", monospace;
+      text-align: center;
+      padding: 8px 4px;
+    }
+
+    .time-adjust {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr) 30px;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .time-shift {
+      min-height: 34px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--wash);
+      color: var(--blue);
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .sentence-text {
+      line-height: 1.55;
+      font-size: 16px;
+    }
+
+    .row-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .row-actions button {
+      min-height: 34px;
+      font-size: 12px;
+      padding: 4px 6px;
+    }
+
+    .preview-card {
+      margin-top: 12px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      background: #101828;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+      max-width: min(520px, calc(100% - 24px));
+      text-align: center;
+    }
+
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 920px) {
+      .app { grid-template-columns: 1fr; }
+      .left {
+        position: static;
+        max-height: none;
+      }
+      .sentence-row {
+        grid-template-columns: 42px 180px minmax(0, 1fr);
+      }
+      .row-actions {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app {
+        width: calc(100% - 10px);
+        margin: 5px auto;
+        gap: 8px;
+      }
+      .panel { padding: 10px; }
+      .brand { padding-bottom: 8px; margin-bottom: 8px; }
+      .brand-mark { width: 32px; height: 32px; }
+      h1 { font-size: 18px; }
+      .course-row { grid-template-columns: 64px minmax(0, 1fr) 68px; }
+      .status { grid-template-columns: 1fr; }
+      .actions, .actions.three, .time-grid { grid-template-columns: 1fr; }
+      .silence-grid, .silence-settings, .silence-list { grid-template-columns: 1fr; }
+      .sentence-row {
+        grid-template-columns: 38px minmax(0, 1fr);
+      }
+      .sentence-time, .sentence-text, .row-actions {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="panel left">
+      <div class="brand">
+        <div class="brand-mark">L</div>
+        <div>
+          <h1>LRC 手工标记</h1>
+          <p class="muted">按句排列，逐句打点，保存字幕</p>
+        </div>
+      </div>
+
+      <div class="course-row">
+        <div class="label-chip">课程号</div>
+        <input id="lessonNumber" type="number" min="1" max="60" value="1">
+        <button class="btn-primary" id="loadLessonBtn">调取</button>
+      </div>
+
+      <div class="status">
+        <span id="txtStatus">TXT 等待</span>
+        <span id="mp3Status">MP3 等待</span>
+        <span id="lrcStatus">LRC 等待</span>
+        <span id="markStatus">0 句已标</span>
+      </div>
+
+      <div class="audio-card">
+        <audio id="audio" controls></audio>
+        <div class="speed-row" aria-label="播放速度">
+          <span>速度</span>
+          <button class="speed-btn" type="button" data-rate="0.8">0.8</button>
+          <button class="speed-btn active" type="button" data-rate="1">1</button>
+        </div>
+        <div class="actions three">
+          <button class="btn-soft" id="backBtn">-3s</button>
+          <button class="btn-teal" id="markCurrentBtn">设为本句开始</button>
+          <button class="btn-soft" id="forwardBtn">+3s</button>
+        </div>
+      </div>
+
+      <section class="silence-card">
+        <h2>空白侦测</h2>
+        <div class="silence-actions">
+          <button class="btn-teal" id="detectSilenceBtn" type="button">侦测</button>
+          <button class="btn-primary" id="smartMatchBtn" type="button">匹配</button>
+        </div>
+        <div class="silence-settings">
+          <div class="field">
+            <label for="minSilenceSeconds">空白最短时长/秒</label>
+            <input id="minSilenceSeconds" type="number" min="0.15" max="3" step="0.05" value="0.60">
+          </div>
+          <div class="field">
+            <label for="minGapSeconds">断点最小间隔/秒</label>
+            <input id="minGapSeconds" type="number" min="0.3" max="8" step="0.1" value="1.20">
+          </div>
+        </div>
+        <div class="silence-grid">
+          <div class="field">
+            <label for="silenceStart">起点空白</label>
+            <select id="silenceStart"></select>
+          </div>
+          <div class="field">
+            <label for="silenceEnd">终点空白</label>
+            <select id="silenceEnd"></select>
+          </div>
+          <div class="field">
+            <label for="silenceSentence">句番号</label>
+            <input id="silenceSentence" type="number" min="1" value="1">
+          </div>
+        </div>
+        <button class="btn-green" id="applySilenceRangeBtn" type="button">套用：起点到终点为本句</button>
+        <div class="silence-list" id="silenceList">
+          <p class="muted">侦测后显示空白点列表。</p>
+        </div>
+      </section>
+
+      <div class="time-grid">
+        <div class="field">
+          <label for="reserveSeconds">第一句预留起点/秒</label>
+          <input id="reserveSeconds" type="number" min="0" step="0.1" value="35">
+        </div>
+        <div class="field">
+          <label for="currentSentence">当前句序号</label>
+          <input id="currentSentence" type="number" min="1" value="1">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-green" id="applyReserveBtn">应用预留时间</button>
+        <button class="btn-soft" id="jumpCurrentBtn">跳到本句时间</button>
+      </div>
+
+      <div class="actions three">
+        <button class="btn-primary" id="saveDraftBtn">保存草稿</button>
+        <button class="btn-teal" id="exportBtn">生成LRC</button>
+        <button class="btn-rose" id="clearBtn">清空时间</button>
+      </div>
+
+      <div class="field">
+        <label for="txtFile">手动选择 TXT</label>
+        <input id="txtFile" type="file" accept=".txt,text/plain">
+      </div>
+      <div class="field">
+        <label for="mp3File">手动选择 MP3</label>
+        <input id="mp3File" type="file" accept="audio/mpeg,audio/mp3,.mp3">
+      </div>
+      <div class="field">
+        <label for="lrcFile">加载已有 LRC</label>
+        <input id="lrcFile" type="file" accept=".lrc,text/plain">
+      </div>
+
+      <section class="preview-card">
+        <h2>LRC预览</h2>
+        <textarea id="lrcPreview" spellcheck="false"></textarea>
+      </section>
+    </aside>
+
+    <main class="panel">
+      <div class="lesson-title">
+        <h1 id="lessonTitle">Lesson 1</h1>
+        <p class="muted" id="lessonSub">加载后会把课文正文按句排列。前面的教学提问可通过“第一句预留起点”跳过。</p>
+      </div>
+      <div id="sentenceList" class="sentence-list"></div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const state = {
+      lesson: 1,
+      meta: {},
+      sentences: [],
+      marks: [],
+      current: 0,
+      exportBase: "III-1",
+      audioArrayBuffer: null,
+      silencePoints: [],
+      playUntil: null,
+      lastManualAnchor: null
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function showToast(message) {
+      const toast = $("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 1700);
+    }
+
+    async function loadLesson(num) {
+      const lesson = Math.max(1, Math.min(60, Number(num) || 1));
+      state.lesson = lesson;
+      $("lessonNumber").value = lesson;
+      const id = String(lesson);
+      $("txtStatus").textContent = "TXT 读取中";
+      $("mp3Status").textContent = "MP3 读取中";
+      $("lrcStatus").textContent = "LRC 读取中";
+      $("txtStatus").classList.remove("ok");
+      $("mp3Status").classList.remove("ok");
+      $("lrcStatus").classList.remove("ok");
+
+      try {
+        const text = await fetchTextEncoded(`NCE3/III-${id}.txt`);
+        const parsed = parseNce3Text(text);
+        applyText(parsed);
+        $("txtStatus").textContent = "TXT 已加载";
+        $("txtStatus").classList.add("ok");
+      } catch (error) {
+        $("txtStatus").textContent = "TXT 未找到";
+        showToast("没有找到本课TXT，可直接选择LRC或TXT");
+      }
+
+      const audio = $("audio");
+      audio.src = `NCE3/III-${id}.mp3`;
+      audio.load();
+      state.audioArrayBuffer = null;
+      state.silencePoints = [];
+      renderSilencePoints();
+      $("mp3Status").textContent = "MP3 已指向";
+      $("mp3Status").classList.add("ok");
+
+      try {
+        const lrcText = await fetchTextEncoded(`NCE3/III-${id}.lrc`);
+        applyLrc(lrcText);
+        $("lrcStatus").textContent = "LRC 已加载";
+        $("lrcStatus").classList.add("ok");
+      } catch (error) {
+        $("lrcStatus").textContent = "LRC 未找到";
+      }
+
+      loadDraft();
+      renderAll();
+    }
+
+    async function fetchTextEncoded(path) {
+      const response = await fetch(path, { cache: "no-store" });
+      if (!response.ok) throw new Error("not found");
+      const buffer = await response.arrayBuffer();
+      return decodeBuffer(buffer);
+    }
+
+    function decodeBuffer(buffer) {
+      for (const encoding of ["gb18030", "gbk", "utf-8"]) {
+        try {
+          const decoded = new TextDecoder(encoding).decode(buffer);
+          if (decoded && !decoded.includes("�")) return decoded;
+        } catch (error) {}
+      }
+      return new TextDecoder("utf-8").decode(buffer);
+    }
+
+    function readFileEncoded(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(decodeBuffer(reader.result));
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function readFileArrayBuffer(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function fileBaseName(file) {
+      return (file?.name || `III-${state.lesson}`).replace(/\.[^.]+$/, "");
+    }
+
+    function parseNce3Text(text) {
+      const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      const lines = normalized.split("\n");
+      const meaningful = lines.map(line => line.trim()).filter(Boolean);
+      const newWordsIndex = lines.findIndex(line => /New\s+words\s+and\s+expressions/i.test(line));
+      const beforeWords = (newWordsIndex >= 0 ? lines.slice(0, newWordsIndex) : lines).map(line => line.trim());
+      const headerLines = beforeWords.filter(Boolean).slice(0, 3);
+      const headerEnd = beforeWords.findIndex(line => line.trim() === headerLines[2]);
+      const bodyLines = beforeWords.slice(headerEnd >= 0 ? headerEnd + 1 : 3);
+      const body = bodyLines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+      return {
+        lessonLine: headerLines[0] || meaningful[0] || "",
+        englishTitle: headerLines[1] || "",
+        chineseTitle: headerLines[2] || "",
+        body
+      };
+    }
+
+    function splitSentences(text) {
+      const paragraphs = text
+        .replace(/\r\n/g, "\n")
+        .split(/\n\s*\n+/)
+        .map(p => p.trim())
+        .filter(Boolean);
+      return paragraphs.flatMap(paragraph => {
+        const parts = paragraph
+          .replace(/\s+/g, " ")
+          .match(/[^.!?。！？]+[.!?。！？"']*|[^.!?。！？]+$/g);
+        return (parts || [paragraph]).map(sentence => sentence.trim()).filter(Boolean);
+      });
+    }
+
+    function parseLrc(text) {
+      const lines = text.split(/\r?\n/);
+      const result = [];
+      const timeReg = /\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\]/g;
+      lines.forEach(line => {
+        const content = line.replace(timeReg, "").trim();
+        let match;
+        while ((match = timeReg.exec(line)) !== null) {
+          const min = Number(match[1]);
+          const sec = Number(match[2]);
+          const ms = Number((match[3] || "0").padEnd(3, "0"));
+          result.push({ time: min * 60 + sec + ms / 1000, text: content });
+        }
+      });
+      return result.sort((a, b) => a.time - b.time);
+    }
+
+    function applyLrc(text, options = {}) {
+      const lines = parseLrc(text);
+      const usableLines = lines.filter(line => line.text);
+      if (usableLines.length) {
+        state.sentences = usableLines.map(line => line.text);
+        state.marks = usableLines.map(line => line.time);
+        state.current = 0;
+        state.lastManualAnchor = null;
+        if (options.fileName) {
+          state.exportBase = fileBaseName({ name: options.fileName });
+          $("lessonTitle").textContent = `编辑 LRC · ${options.fileName}`;
+          $("lessonSub").textContent = `已从 LRC 读取 ${state.sentences.length} 句文本。选择 MP3 后可直接播放并逐句修改时间。`;
+        } else {
+          $("lessonSub").textContent = `已从 LRC 读取 ${state.sentences.length} 句文本，可继续修改。`;
+        }
+        $("currentSentence").value = 1;
+        renderAll();
+        showToast(`已载入 ${state.sentences.length} 条 LRC 文本和时间，可继续修改`);
+        return;
+      }
+      if (!lines.length) {
+        showToast("LRC里没有识别到时间标签");
+        return;
+      }
+      if (!state.sentences.length) {
+        state.sentences = lines.map(line => line.text).filter(Boolean);
+        state.marks = new Array(state.sentences.length).fill(null);
+      }
+      const count = Math.min(state.sentences.length, lines.length);
+      for (let i = 0; i < count; i += 1) {
+        state.marks[i] = lines[i].time;
+      }
+      state.current = 0;
+      $("currentSentence").value = 1;
+      renderAll();
+      showToast(`已加载 ${count} 条LRC时间，可继续修改`);
+    }
+
+    function applyText(parsed) {
+      state.meta = parsed;
+      state.sentences = splitSentences(parsed.body);
+      state.marks = new Array(state.sentences.length).fill(null);
+      state.current = 0;
+      state.lastManualAnchor = null;
+      state.exportBase = `III-${state.lesson}`;
+      $("currentSentence").value = 1;
+      $("lessonTitle").textContent = `${parsed.lessonLine || `Lesson ${state.lesson}`} · ${parsed.englishTitle || ""}`.trim();
+      $("lessonSub").textContent = parsed.chineseTitle || `${state.sentences.length} 句正文`;
+      renderAll();
+    }
+
+    function renderAll() {
+      renderSentences();
+      updatePreview();
+      updateStatus();
+    }
+
+    function renderSentences() {
+      const list = $("sentenceList");
+      list.innerHTML = "";
+      if (!state.sentences.length) {
+        list.innerHTML = '<p class="muted">请选择 LRC 文件。LRC 会直接生成可修改的句子和时间；TXT 只是备用。</p>';
+        return;
+      }
+      state.sentences.forEach((sentence, index) => {
+        const row = document.createElement("div");
+        row.className = `sentence-row${index === state.current ? " current" : ""}`;
+        row.innerHTML = `
+          <div class="index">${index + 1}</div>
+          <div class="sentence-time">
+            <div class="time-adjust">
+              <button class="time-shift" type="button" data-shift="${index}" data-amount="-3">-</button>
+              <input value="${formatLrcTime(state.marks[index])}" data-time="${index}" aria-label="第${index + 1}句时间">
+              <button class="time-shift" type="button" data-shift="${index}" data-amount="3">+</button>
+            </div>
+          </div>
+          <div class="sentence-text">${escapeHtml(sentence)}</div>
+          <div class="row-actions">
+            <button class="btn-teal" data-mark="${index}">标记</button>
+            <button class="btn-soft" data-seek="${index}">跳转</button>
+            <button class="btn-rose" data-clear="${index}">清除</button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function updateStatus() {
+      const count = state.marks.filter(time => Number.isFinite(time)).length;
+      $("markStatus").textContent = `${count} 句已标`;
+      $("markStatus").classList.toggle("ok", count > 0);
+    }
+
+    function updatePreview() {
+      $("lrcPreview").value = state.sentences.map((sentence, index) => {
+        return `[${formatLrcTime(state.marks[index])}]${sentence}`;
+      }).join("\n");
+    }
+
+    function markSentence(index, time = $("audio").currentTime) {
+      if (!state.sentences[index]) return;
+      state.marks[index] = Number(time) || 0;
+      state.lastManualAnchor = index;
+      state.current = Math.min(index + 1, state.sentences.length - 1);
+      $("currentSentence").value = state.current + 1;
+      renderAll();
+      scrollCurrentIntoView();
+    }
+
+    function seekSentence(index) {
+      const time = state.marks[index];
+      if (!Number.isFinite(time)) {
+        showToast("这一句还没有时间点");
+        return;
+      }
+      const audio = $("audio");
+      state.playUntil = null;
+      audio.currentTime = time;
+      state.current = index;
+      $("currentSentence").value = index + 1;
+      renderAll();
+      scrollCurrentIntoView();
+      audio.play().catch(() => showToast("已跳到本句，请点播放器开始播放"));
+    }
+
+    function handleAudioTimeUpdate() {
+      const audio = $("audio");
+      if (!Number.isFinite(state.playUntil)) return;
+      if (audio.currentTime >= state.playUntil - 0.03) {
+        audio.pause();
+        audio.currentTime = state.playUntil;
+        state.playUntil = null;
+      }
+    }
+
+    function clearSentence(index) {
+      state.marks[index] = null;
+      renderAll();
+    }
+
+    function shiftSentenceTime(index, amount) {
+      if (!state.sentences[index]) return;
+      const base = Number.isFinite(state.marks[index]) ? state.marks[index] : 0;
+      state.marks[index] = Math.max(0, base + amount);
+      state.lastManualAnchor = index;
+      state.current = index;
+      $("currentSentence").value = index + 1;
+      renderAll();
+    }
+
+    function applyReserve() {
+      if (!state.sentences.length) {
+        showToast("请先加载 LRC 或课文文本");
+        return;
+      }
+      const reserve = Math.max(0, Number($("reserveSeconds").value) || 0);
+      state.marks[0] = reserve;
+      state.current = 0;
+      $("audio").currentTime = reserve;
+      $("currentSentence").value = 1;
+      renderAll();
+      scrollCurrentIntoView();
+      showToast(`第一句起点已设为 ${formatDisplayTime(reserve)}`);
+    }
+
+    function saveDraft() {
+      if (!state.sentences.length) return;
+      localStorage.setItem(storageKey(), JSON.stringify({
+        lesson: state.lesson,
+        marks: state.marks,
+        savedAt: new Date().toISOString()
+      }));
+      showToast("草稿已保存到本浏览器");
+    }
+
+    function loadDraft() {
+      try {
+        const raw = localStorage.getItem(storageKey());
+        if (!raw) return;
+        if (state.marks.some(time => Number.isFinite(time))) return;
+        const draft = JSON.parse(raw);
+        if (Array.isArray(draft.marks)) {
+          state.marks = state.sentences.map((_, index) => {
+            const value = Number(draft.marks[index]);
+            return Number.isFinite(value) ? value : null;
+          });
+          showToast("已恢复本课LRC草稿");
+        }
+      } catch (error) {}
+    }
+
+    function exportLrc() {
+      const content = $("lrcPreview").value.trim();
+      if (!content) {
+        showToast("没有可导出的LRC");
+        return;
+      }
+      const blob = new Blob([content + "\n"], { type: "text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${state.exportBase || `III-${state.lesson}`}.lrc`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }
+
+    function storageKey() {
+      return `lrc-generator:nce3:${state.exportBase || `III-${state.lesson}`}`;
+    }
+
+    function tryStartAudio() {
+      const audio = $("audio");
+      if (!audio.src) return;
+      audio.play().catch(() => showToast("MP3已载入，请点播放器开始播放"));
+    }
+
+    function clampNumber(value, min, max, fallback) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return fallback;
+      return Math.min(max, Math.max(min, number));
+    }
+
+    function setPlaybackRate(rate) {
+      const audio = $("audio");
+      audio.playbackRate = rate;
+      document.querySelectorAll(".speed-btn").forEach(button => {
+        button.classList.toggle("active", Number(button.dataset.rate) === rate);
+      });
+    }
+
+    async function getAudioArrayBuffer() {
+      if (state.audioArrayBuffer) return state.audioArrayBuffer.slice(0);
+      const audio = $("audio");
+      const src = audio.currentSrc || audio.src;
+      if (!src) throw new Error("no audio");
+      const response = await fetch(src, { cache: "no-store" });
+      if (!response.ok) throw new Error("audio fetch failed");
+      return response.arrayBuffer();
+    }
+
+    async function detectSilencePoints() {
+      const button = $("detectSilenceBtn");
+      button.disabled = true;
+      button.textContent = "侦测中...";
+      try {
+        const arrayBuffer = await getAudioArrayBuffer();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) throw new Error("no audio context");
+        const audioContext = new AudioContextClass();
+        const decoded = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+        const channelCount = decoded.numberOfChannels;
+        const sampleRate = decoded.sampleRate;
+        const frameSize = Math.max(256, Math.floor(sampleRate * 0.025));
+        const silenceThreshold = 0.014;
+        const minSilenceSeconds = clampNumber($("minSilenceSeconds").value, 0.15, 3, 0.6);
+        const minGapSeconds = clampNumber($("minGapSeconds").value, 0.3, 8, 1.2);
+        const points = [];
+        let silenceStart = null;
+
+        for (let offset = 0; offset < decoded.length; offset += frameSize) {
+          let sum = 0;
+          let samples = 0;
+          const end = Math.min(decoded.length, offset + frameSize);
+          for (let channel = 0; channel < channelCount; channel += 1) {
+            const data = decoded.getChannelData(channel);
+            for (let i = offset; i < end; i += 1) {
+              sum += data[i] * data[i];
+              samples += 1;
+            }
+          }
+          const rms = Math.sqrt(sum / Math.max(1, samples));
+          const frameStart = offset / sampleRate;
+          const frameEnd = end / sampleRate;
+          if (rms < silenceThreshold) {
+            if (silenceStart === null) silenceStart = frameStart;
+          } else if (silenceStart !== null) {
+            const duration = frameStart - silenceStart;
+            const midpoint = silenceStart + duration / 2;
+            const previous = points[points.length - 1];
+            if (duration >= minSilenceSeconds && (!previous || midpoint - previous.time >= minGapSeconds)) {
+              points.push({ start: silenceStart, end: frameStart, time: midpoint, duration });
+            }
+            silenceStart = null;
+          }
+        }
+
+        if (silenceStart !== null) {
+          const duration = decoded.duration - silenceStart;
+          if (duration >= minSilenceSeconds) {
+            const midpoint = silenceStart + duration / 2;
+            const previous = points[points.length - 1];
+            if (!previous || midpoint - previous.time >= minGapSeconds) {
+              points.push({ start: silenceStart, end: decoded.duration, time: midpoint, duration });
+            }
+          }
+        }
+
+        state.silencePoints = points;
+        renderSilencePoints();
+        showToast(points.length ? `已侦测到 ${points.length} 个空白点，可调高空白时长继续筛选` : "没有侦测到明显空白点，可降低空白时长");
+        if (audioContext.close) audioContext.close();
+      } catch (error) {
+        showToast("无法侦测空白，请先选择或载入MP3");
+      } finally {
+        button.disabled = false;
+        button.textContent = "侦测";
+      }
+    }
+
+    function renderSilencePoints() {
+      const startSelect = $("silenceStart");
+      const endSelect = $("silenceEnd");
+      const list = $("silenceList");
+      if (!startSelect || !endSelect || !list) return;
+      const options = state.silencePoints.map((point, index) => {
+        const label = `X${index + 1} ${formatLrcTime(point.time)} (${point.duration.toFixed(2)}s)`;
+        return `<option value="${index}">${label}</option>`;
+      }).join("");
+      startSelect.innerHTML = options;
+      updateSilenceEndFromStart();
+      if (!state.silencePoints.length) {
+        list.innerHTML = '<p class="muted">侦测后显示空白点列表。</p>';
+        return;
+      }
+      list.innerHTML = state.silencePoints.map((point, index) => `
+        <button class="silence-point" type="button" data-silence="${index}">
+          X${index + 1} ${formatLrcTime(point.time)} · ${point.duration.toFixed(2)}s
+        </button>
+      `).join("");
+    }
+
+    function silenceOption(index) {
+      const point = state.silencePoints[index];
+      if (!point) return "";
+      return `<option value="${index}">X${index + 1} ${formatLrcTime(point.time)} (${point.duration.toFixed(2)}s)</option>`;
+    }
+
+    function updateSilenceEndFromStart() {
+      const startSelect = $("silenceStart");
+      const endSelect = $("silenceEnd");
+      if (!startSelect || !endSelect) return;
+      const startIndex = Number(startSelect.value);
+      const nextIndex = Math.min(state.silencePoints.length - 1, Math.max(0, startIndex + 1));
+      endSelect.innerHTML = silenceOption(nextIndex);
+      endSelect.value = String(nextIndex);
+    }
+
+    function applySilenceRange() {
+      if (!state.sentences.length) {
+        showToast("请先加载LRC或课文文本");
+        return;
+      }
+      const startIndex = Number($("silenceStart").value);
+      const endIndex = Number($("silenceEnd").value);
+      const sentenceIndex = Math.max(0, Number($("silenceSentence").value) - 1);
+      const startPoint = state.silencePoints[startIndex];
+      const endPoint = state.silencePoints[endIndex];
+      if (!startPoint || !endPoint) {
+        showToast("请先侦测并选择两个空白点");
+        return;
+      }
+      if (endIndex <= startIndex) {
+        showToast("起点后面没有可用的下一个空白点");
+        return;
+      }
+      if (sentenceIndex >= state.sentences.length) {
+        showToast("句番号超出课文句数");
+        return;
+      }
+      state.marks[sentenceIndex] = startPoint.time;
+      state.lastManualAnchor = sentenceIndex;
+      if (sentenceIndex + 1 < state.sentences.length) {
+        state.marks[sentenceIndex + 1] = endPoint.time;
+      }
+      rematchFollowingSentences(endIndex, sentenceIndex + 1);
+      state.current = Math.min(sentenceIndex + 1, state.sentences.length - 1);
+      $("currentSentence").value = state.current + 1;
+      $("audio").currentTime = startPoint.time;
+      renderAll();
+      showToast(`已套用：第 ${sentenceIndex + 1} 句 ${formatLrcTime(startPoint.time)} → ${formatLrcTime(endPoint.time)}`);
+    }
+
+    function rematchFollowingSentences(pointStartIndex, sentenceStartIndex) {
+      const remainingSentences = state.sentences.slice(sentenceStartIndex);
+      if (!remainingSentences.length) return;
+      const usable = state.silencePoints.slice(pointStartIndex);
+      if (usable.length < remainingSentences.length) {
+        showToast("后续空白点不足，已保留当前区间");
+        return;
+      }
+
+      const weights = remainingSentences.map(sentenceWeight);
+      const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+      const startTime = usable[0].time;
+      const audio = $("audio");
+      const endTime = Number.isFinite(audio.duration) && audio.duration > startTime
+        ? audio.duration
+        : usable[usable.length - 1].time;
+
+      const matched = [];
+      let previousIndex = 0;
+      let weightBefore = 0;
+      for (let i = 0; i < remainingSentences.length; i += 1) {
+        if (i === 0) {
+          matched.push(usable[0].time);
+          continue;
+        }
+        weightBefore += weights[i - 1];
+        const target = startTime + (weightBefore / totalWeight) * (endTime - startTime);
+        const minIndex = previousIndex + 1;
+        const maxIndex = usable.length - (remainingSentences.length - i);
+        let bestIndex = minIndex;
+        let bestDistance = Infinity;
+        for (let candidateIndex = minIndex; candidateIndex <= maxIndex; candidateIndex += 1) {
+          const distance = Math.abs(usable[candidateIndex].time - target);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestIndex = candidateIndex;
+          }
+        }
+        matched.push(usable[bestIndex].time);
+        previousIndex = bestIndex;
+      }
+
+      matched.forEach((time, offset) => {
+        state.marks[sentenceStartIndex + offset] = time;
+      });
+    }
+
+    function sentenceWeight(sentence) {
+      const text = String(sentence || "");
+      const words = text.match(/[A-Za-z]+(?:[-'][A-Za-z]+)?|\d+(?:[.,]\d+)*/g) || [];
+      const charEstimate = Math.ceil(text.replace(/\s+/g, "").length / 7);
+      const pauseBonus = (text.match(/[,;:]/g) || []).length * 0.6;
+      const endBonus = /[.!?]$/.test(text.trim()) ? 0.4 : 0;
+      return Math.max(1, words.length, charEstimate) + pauseBonus + endBonus;
+    }
+
+    function nearestSilenceIndex(time, points) {
+      let bestIndex = 0;
+      let bestDistance = Infinity;
+      points.forEach((point, index) => {
+        const distance = Math.abs(point.time - time);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestIndex = index;
+        }
+      });
+      return bestIndex;
+    }
+
+    function rematchAfterManualAnchor(anchorIndex, points) {
+      const anchorTime = state.marks[anchorIndex];
+      if (!Number.isFinite(anchorTime)) return false;
+      const remainingSentences = state.sentences.slice(anchorIndex);
+      if (remainingSentences.length <= 1) {
+        showToast("这个锚点后面没有需要重新匹配的句子");
+        return true;
+      }
+
+      const candidates = points.filter(point => point.time > anchorTime + 0.05);
+      const followingCount = remainingSentences.length - 1;
+      if (candidates.length < followingCount) {
+        showToast(`锚点后空白点只有 ${candidates.length} 个，少于后续 ${followingCount} 句`);
+        return true;
+      }
+
+      const weights = remainingSentences.map(sentenceWeight);
+      const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+      const audio = $("audio");
+      const endTime = Number.isFinite(audio.duration) && audio.duration > anchorTime
+        ? audio.duration
+        : candidates[candidates.length - 1].time;
+
+      let previousIndex = -1;
+      let weightBefore = 0;
+      for (let i = 1; i < remainingSentences.length; i += 1) {
+        weightBefore += weights[i - 1];
+        const target = anchorTime + (weightBefore / totalWeight) * (endTime - anchorTime);
+        const minIndex = previousIndex + 1;
+        const maxIndex = candidates.length - (remainingSentences.length - i);
+        let bestIndex = minIndex;
+        let bestDistance = Infinity;
+        for (let candidateIndex = minIndex; candidateIndex <= maxIndex; candidateIndex += 1) {
+          const distance = Math.abs(candidates[candidateIndex].time - target);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestIndex = candidateIndex;
+          }
+        }
+        state.marks[anchorIndex + i] = candidates[bestIndex].time;
+        previousIndex = bestIndex;
+      }
+
+      state.current = Math.min(anchorIndex + 1, state.sentences.length - 1);
+      $("currentSentence").value = state.current + 1;
+      renderAll();
+      showToast(`已固定第 ${anchorIndex + 1} 句，重新匹配后续句子`);
+      return true;
+    }
+
+    function smartMatchSilencePoints() {
+      if (!state.sentences.length) {
+        showToast("请先加载LRC或课文文本");
+        return;
+      }
+      const points = state.silencePoints
+        .slice()
+        .sort((a, b) => a.time - b.time);
+      if (Number.isInteger(state.lastManualAnchor)
+          && state.lastManualAnchor >= 0
+          && state.lastManualAnchor < state.sentences.length
+          && Number.isFinite(state.marks[state.lastManualAnchor])
+          && rematchAfterManualAnchor(state.lastManualAnchor, points)) {
+        return;
+      }
+      const sentenceCount = state.sentences.length;
+      if (points.length < sentenceCount) {
+        showToast(`空白点只有 ${points.length} 个，少于 ${sentenceCount} 句，请降低筛选条件后重试`);
+        return;
+      }
+
+      const firstMarked = Number.isFinite(state.marks[0]) ? state.marks[0] : null;
+      let startIndex = firstMarked === null ? 0 : nearestSilenceIndex(firstMarked, points);
+      if (points.length - startIndex < sentenceCount) {
+        startIndex = Math.max(0, points.length - sentenceCount);
+      }
+
+      const usable = points.slice(startIndex);
+      const weights = state.sentences.map(sentenceWeight);
+      const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+      const startTime = usable[0].time;
+      const audio = $("audio");
+      const endTime = Number.isFinite(audio.duration) && audio.duration > startTime
+        ? audio.duration
+        : usable[usable.length - 1].time;
+
+      const matched = [];
+      let previousIndex = 0;
+      let weightBefore = 0;
+      for (let i = 0; i < sentenceCount; i += 1) {
+        const target = startTime + (weightBefore / totalWeight) * (endTime - startTime);
+        const minIndex = i === 0 ? 0 : previousIndex + 1;
+        const maxIndex = usable.length - (sentenceCount - i);
+        let bestIndex = minIndex;
+        let bestDistance = Infinity;
+        for (let candidateIndex = minIndex; candidateIndex <= maxIndex; candidateIndex += 1) {
+          const distance = Math.abs(usable[candidateIndex].time - target);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestIndex = candidateIndex;
+          }
+        }
+        matched.push(usable[bestIndex].time);
+        previousIndex = bestIndex;
+        weightBefore += weights[i];
+      }
+
+      state.marks = state.sentences.map((_, index) => matched[index] ?? null);
+      state.current = 0;
+      $("currentSentence").value = 1;
+      renderAll();
+      showToast(`已按 ${sentenceCount} 句智能匹配断点，可逐句跳转检查`);
+    }
+
+    function parseTimeInput(value) {
+      const text = String(value || "").trim();
+      const match = text.match(/^(\d{1,2}):(\d{2})(?:\.(\d{1,2}))?$/);
+      if (match) {
+        return Number(match[1]) * 60 + Number(match[2]) + Number((match[3] || "0").padEnd(2, "0")) / 100;
+      }
+      const numeric = Number(text);
+      return Number.isFinite(numeric) ? numeric : null;
+    }
+
+    function formatLrcTime(time) {
+      const safe = Number.isFinite(time) ? Math.max(0, time) : 0;
+      const min = Math.floor(safe / 60);
+      const sec = Math.floor(safe % 60);
+      const cs = Math.floor((safe - Math.floor(safe)) * 100);
+      return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${String(cs).padStart(2, "0")}`;
+    }
+
+    function formatDisplayTime(time) {
+      const min = Math.floor(time / 60);
+      const sec = Math.floor(time % 60);
+      return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    }
+
+    function scrollCurrentIntoView() {
+      const row = document.querySelector(".sentence-row.current");
+      if (row) row.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function bindEvents() {
+      $("loadLessonBtn").addEventListener("click", () => loadLesson($("lessonNumber").value));
+      $("lessonNumber").addEventListener("keydown", event => {
+        if (event.key === "Enter") loadLesson($("lessonNumber").value);
+      });
+      $("lessonNumber").addEventListener("change", () => loadLesson($("lessonNumber").value));
+      $("applyReserveBtn").addEventListener("click", applyReserve);
+      $("markCurrentBtn").addEventListener("click", () => markSentence(state.current));
+      $("jumpCurrentBtn").addEventListener("click", () => seekSentence(Math.max(0, Number($("currentSentence").value) - 1)));
+      $("audio").addEventListener("timeupdate", handleAudioTimeUpdate);
+      $("audio").addEventListener("ended", () => state.playUntil = null);
+      $("backBtn").addEventListener("click", () => $("audio").currentTime = Math.max(0, $("audio").currentTime - 3));
+      $("forwardBtn").addEventListener("click", () => $("audio").currentTime = $("audio").currentTime + 3);
+      document.querySelectorAll(".speed-btn").forEach(button => {
+        button.addEventListener("click", () => setPlaybackRate(Number(button.dataset.rate)));
+      });
+      $("detectSilenceBtn").addEventListener("click", detectSilencePoints);
+      $("smartMatchBtn").addEventListener("click", smartMatchSilencePoints);
+      $("applySilenceRangeBtn").addEventListener("click", applySilenceRange);
+      $("silenceStart").addEventListener("change", updateSilenceEndFromStart);
+      $("silenceList").addEventListener("click", event => {
+        const button = event.target.closest("[data-silence]");
+        if (!button) return;
+        const index = Number(button.dataset.silence);
+        const point = state.silencePoints[index];
+        if (!point) return;
+        $("audio").currentTime = point.time;
+        $("silenceStart").value = String(index);
+        updateSilenceEndFromStart();
+      });
+      $("saveDraftBtn").addEventListener("click", saveDraft);
+      $("exportBtn").addEventListener("click", exportLrc);
+      $("clearBtn").addEventListener("click", () => {
+        state.marks = state.marks.map(() => null);
+        state.lastManualAnchor = null;
+        renderAll();
+      });
+      $("currentSentence").addEventListener("change", () => {
+        const index = Math.max(0, Math.min(state.sentences.length - 1, Number($("currentSentence").value) - 1));
+        state.current = index;
+        $("currentSentence").value = index + 1;
+        renderAll();
+        scrollCurrentIntoView();
+      });
+      $("sentenceList").addEventListener("click", event => {
+        const shift = event.target.closest("[data-shift]");
+        const mark = event.target.closest("[data-mark]");
+        const seek = event.target.closest("[data-seek]");
+        const clear = event.target.closest("[data-clear]");
+        if (shift) shiftSentenceTime(Number(shift.dataset.shift), Number(shift.dataset.amount));
+        if (mark) markSentence(Number(mark.dataset.mark));
+        if (seek) seekSentence(Number(seek.dataset.seek));
+        if (clear) clearSentence(Number(clear.dataset.clear));
+      });
+      $("sentenceList").addEventListener("change", event => {
+        const input = event.target.closest("input[data-time]");
+        if (!input) return;
+        const index = Number(input.dataset.time);
+        const time = parseTimeInput(input.value);
+        if (Number.isFinite(time)) {
+          state.marks[index] = time;
+          state.lastManualAnchor = index;
+          state.current = index;
+          $("currentSentence").value = index + 1;
+          renderAll();
+        } else {
+          input.value = formatLrcTime(state.marks[index]);
+          showToast("请输入 00:35.20 或秒数");
+        }
+      });
+      $("txtFile").addEventListener("change", async event => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const text = await readFileEncoded(file);
+        const parsed = /New\s+words\s+and\s+expressions/i.test(text)
+          ? parseNce3Text(text)
+          : { lessonLine: file.name, englishTitle: "", chineseTitle: "", body: text };
+        applyText(parsed);
+        $("txtStatus").textContent = "TXT 已选择";
+        $("txtStatus").classList.add("ok");
+      });
+      $("mp3File").addEventListener("change", async event => {
+        const file = event.target.files[0];
+        if (!file) return;
+        state.audioArrayBuffer = await readFileArrayBuffer(file);
+        state.silencePoints = [];
+        renderSilencePoints();
+        $("audio").src = URL.createObjectURL(file);
+        $("audio").load();
+        setPlaybackRate($("audio").playbackRate || 1);
+        if (!state.exportBase || /^III-\d+$/.test(state.exportBase)) {
+          state.exportBase = fileBaseName(file);
+        }
+        tryStartAudio();
+        $("mp3Status").textContent = "MP3 已选择";
+        $("mp3Status").classList.add("ok");
+      });
+      $("lrcFile").addEventListener("change", async event => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const text = await readFileEncoded(file);
+        applyLrc(text, { fileName: file.name });
+        tryStartAudio();
+        $("lrcStatus").textContent = "LRC 已选择";
+        $("lrcStatus").classList.add("ok");
+      });
+    }
+
+    bindEvents();
+    loadLesson(1);
+  </script>
+</body>
+</html>

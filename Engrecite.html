@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快速背诵助手</title>
+  <link rel="icon" type="image/png" href="site-icon-32.png">
+  <style>
+    :root {
+      --ink: #f8fbff;
+      --muted: #b7c5d8;
+      --line: #274363;
+      --paper: #0d1728;
+      --wash: #132238;
+      --blue: #4f9cff;
+      --blue-soft: #102f5b;
+      --green: #22c55e;
+      --green-soft: #123923;
+      --amber: #fbbf24;
+      --amber-soft: #3b2b12;
+      --rose: #fb7185;
+      --rose-soft: #3d1722;
+      --teal: #2dd4bf;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(79, 156, 255, .18), transparent 28%),
+        radial-gradient(circle at 92% 4%, rgba(45, 212, 191, .12), transparent 24%),
+        linear-gradient(180deg, #08111f 0%, #0d1728 54%, #050b14 100%);
+      min-height: 100vh;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      border-radius: 7px;
+      cursor: pointer;
+      min-height: 40px;
+      font-weight: 700;
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      width: min(1280px, calc(100% - 28px));
+      margin: 12px auto;
+    }
+
+    .sidebar, .main-panel, .section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      padding: 7px 10px;
+      align-self: start;
+      position: static;
+      max-height: none;
+      overflow: auto;
+    }
+
+    .brand {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 0;
+      border-bottom: 0;
+      margin-bottom: 0;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(79, 156, 255, .12);
+      border: 1px solid rgba(79, 156, 255, .28);
+      overflow: hidden;
+    }
+
+    .brand-mark img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .theme-toggle {
+      width: 28px;
+      height: 28px;
+      min-height: 28px;
+      padding: 0;
+      border-radius: 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+    }
+
+    .theme-toggle img,
+    .settings-toggle img {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+      display: block;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 20px; line-height: 1.25; }
+    h2 { font-size: 17px; margin-bottom: 10px; }
+    h3 { font-size: 15px; margin-bottom: 8px; }
+    .muted { color: var(--muted); font-size: 13px; line-height: 1.55; }
+
+    .brand .muted {
+      line-height: 1.15;
+      font-size: 12px;
+    }
+
+    .lesson-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 7px;
+      margin: 10px 0 14px;
+    }
+
+    .lesson-picker {
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      margin: 8px 0;
+    }
+
+    .lesson-picker input {
+      text-align: center;
+      font-weight: 900;
+      font-size: 18px;
+      min-height: 42px;
+    }
+
+    .compact-toolbar {
+      display: grid;
+      grid-template-columns: 52px 72px 44px;
+      gap: 5px;
+      align-items: center;
+      margin: 0;
+      justify-self: end;
+      white-space: nowrap;
+      min-width: max-content;
+    }
+
+    .compact-toolbar .toolbar-label {
+      min-height: 28px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f8fbff;
+      color: #334155;
+      font-weight: 800;
+      font-size: 12px;
+      white-space: nowrap;
+      padding: 2px 7px;
+    }
+
+    .compact-toolbar input {
+      text-align: center;
+      font-weight: 900;
+      font-size: 12px;
+      min-height: 20px;
+      padding: 2px 3px;
+      width: 72px;
+      min-width: 72px;
+      height: 20px;
+    }
+
+    .utility-panel {
+      position: relative;
+      margin-top: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      overflow: visible;
+    }
+
+    .settings-toggle {
+      cursor: pointer;
+      padding: 0;
+      font-weight: 900;
+      color: #111827;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      min-height: 28px;
+      background: transparent;
+      border: 0;
+      width: 100%;
+    }
+
+    .settings-icon {
+      position: relative;
+      width: 26px;
+      height: 20px;
+      display: inline-block;
+    }
+
+    .settings-icon::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 1px;
+      width: 19px;
+      height: 4px;
+      background: currentColor;
+      box-shadow: 0 8px 0 currentColor, 0 16px 0 currentColor;
+    }
+
+    .settings-icon::after {
+      content: "+";
+      position: absolute;
+      right: 0;
+      bottom: -5px;
+      font-size: 25px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .utility-body {
+      position: fixed;
+      left: 50%;
+      right: auto;
+      top: 82px;
+      transform: translateX(-50%);
+      z-index: 1000;
+      width: min(392px, calc(100vw - 18px));
+      padding: 10px;
+      display: grid;
+      gap: 9px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 18px 50px rgba(15, 73, 132, .18);
+      max-height: none;
+      overflow: hidden;
+    }
+
+    .utility-panel:not(.open) .utility-body {
+      display: none;
+    }
+
+    .utility-panel.open .utility-body {
+      display: grid;
+    }
+
+    .settings-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .settings-actions button {
+      min-height: 20px;
+      padding: 1px 6px;
+      font-size: 10px;
+      line-height: 1;
+      border-radius: 999px;
+    }
+
+    .file-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .mini-file {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .mini-file label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .mini-file input[type="file"] {
+      min-width: 0;
+      max-width: 100%;
+      min-height: 34px;
+      padding: 9px 7px;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .lesson-btn {
+      min-height: 36px;
+      color: var(--ink);
+      background: var(--wash);
+      border: 1px solid transparent;
+      font-size: 13px;
+    }
+
+    .lesson-btn.active {
+      color: var(--blue);
+      background: var(--blue-soft);
+      border-color: #9db8ff;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 800;
+      color: #334155;
+    }
+
+    textarea, input[type="file"], input[type="text"], select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 10px;
+      background: #fbfdff;
+      color: var(--ink);
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+      line-height: 1.65;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-teal { background: var(--teal); color: #fff; }
+    .btn-soft { background: var(--wash); color: var(--ink); border: 1px solid var(--line); }
+    .btn-amber { background: var(--amber-soft); color: var(--amber); }
+    .btn-rose { background: var(--rose-soft); color: var(--rose); }
+
+    .main-panel {
+      padding: 16px;
+      min-width: 0;
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 8px;
+    }
+
+    .topbar > div:first-child {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .stats {
+      display: flex;
+      gap: 5px;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      align-items: center;
+      white-space: nowrap;
+      min-width: max-content;
+    }
+
+    .stat {
+      min-width: 44px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #fff, var(--wash));
+      border: 1px solid var(--line);
+      line-height: 1;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 11px;
+      display: inline;
+    }
+
+    .stat span {
+      font-size: 10px;
+      color: var(--muted);
+      margin-left: 2px;
+    }
+
+    #lessonSub,
+    #currentMeta {
+      display: none;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(330px, .75fr);
+      gap: 14px;
+    }
+
+    .section-title-line {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: nowrap;
+      white-space: nowrap;
+    }
+
+    .section-title-line h2 {
+      margin-bottom: 0;
+    }
+
+    .section {
+      padding: 9px;
+      box-shadow: none;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.98), rgba(250,253,255,.96));
+    }
+
+    .section + .section { margin-top: 8px; }
+
+    audio {
+      width: 100%;
+      height: 24px;
+      margin: 0;
+    }
+
+    .audio-panel {
+      padding: 7px;
+      background: linear-gradient(135deg, rgba(234,243,255,.96), rgba(255,255,255,.98));
+      border-color: #bfd7f1;
+    }
+
+    .player-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 76px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .reference-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .reference-panel details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.95);
+      overflow: hidden;
+    }
+
+    .reference-panel summary {
+      cursor: pointer;
+      padding: 8px 10px;
+      font-weight: 900;
+      color: var(--blue);
+      background: linear-gradient(180deg, #fff, var(--blue-soft));
+    }
+
+    .reference-body {
+      max-height: 260px;
+      overflow: auto;
+      padding: 10px;
+      white-space: pre-wrap;
+      line-height: 1.65;
+      color: #334155;
+      font-size: 14px;
+    }
+
+    .speed-group, .mode-group {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+
+    .speed-group {
+      grid-template-columns: repeat(2, 1fr);
+      width: 76px;
+      justify-self: end;
+    }
+
+    .speed-btn {
+      background: transparent;
+      color: #334155;
+      border: 0;
+      position: relative;
+      min-height: 24px;
+      padding: 0 2px 0 16px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .speed-btn::before {
+      content: "";
+      position: absolute;
+      left: 2px;
+      top: 50%;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      border: 1.5px solid #7b8aa0;
+      transform: translateY(-50%);
+    }
+
+    .speed-btn.active::before {
+      background: var(--blue);
+      border-color: var(--blue);
+      box-shadow: inset 0 0 0 2px #fff;
+    }
+
+    .mode-btn {
+      background: #fff;
+      color: #334155;
+      border: 1px solid var(--line);
+      min-height: 26px;
+      padding: 2px 6px;
+      font-size: 12px;
+    }
+
+    #prevSentenceBtn,
+    #nextSentenceBtn,
+    #startGameBtn {
+      min-height: 18px;
+      padding: 1px 5px;
+      font-size: 10px;
+      line-height: 1;
+    }
+
+    .mode-btn.active {
+      background: var(--blue-soft);
+      color: var(--blue);
+      border-color: #9db8ff;
+    }
+
+    .mode-group {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .paragraph-tabs, .sentence-list {
+      display: flex;
+      gap: 5px;
+      flex-wrap: nowrap;
+      margin-top: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: thin;
+    }
+
+    .pill {
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--wash);
+      color: #334155;
+      min-height: 24px;
+      font-size: 12px;
+      flex: 0 0 auto;
+    }
+
+    .pill.active {
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: #9ed7ad;
+    }
+
+    .reader {
+      min-height: 220px;
+      padding: 9px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(234,243,255,.76), transparent 16%),
+        #fbfdff;
+      line-height: 1.35;
+      font-size: 15px;
+    }
+
+    .reader.empty-tip {
+      min-height: 110px;
+      padding: 9px;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .sentence {
+      display: inline;
+      border-radius: 6px;
+      padding: 2px 3px;
+    }
+
+    .sentence.current {
+      background: var(--amber-soft);
+      box-shadow: inset 0 -2px 0 rgba(180, 83, 9, .28);
+    }
+
+    .word {
+      display: inline-block;
+      min-width: .7em;
+      margin: 0 1px;
+      padding: 0 4px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background .12s ease, color .12s ease;
+    }
+
+    .word.hidden {
+      color: transparent;
+      background: #d9e1ea;
+      box-shadow: inset 0 -2px 0 #b7c3cf;
+    }
+
+    .word.initial {
+      color: var(--blue);
+      background: var(--blue-soft);
+      letter-spacing: 0;
+    }
+
+    .word.revealed {
+      color: var(--ink);
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .lrc-box {
+      max-height: 158px;
+      min-height: 158px;
+      display: grid;
+      gap: 5px;
+      overflow-y: auto;
+      padding-right: 4px;
+      scrollbar-width: thin;
+    }
+
+    .lrc-line {
+      padding: 6px 8px;
+      border-radius: 7px;
+      background: var(--wash);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      cursor: pointer;
+      line-height: 1.45;
+      min-height: 38px;
+    }
+
+    .lrc-line.active {
+      background: #eefcf8;
+      color: var(--teal);
+      border-color: #8ed7c9;
+      font-weight: 800;
+      box-shadow: inset 3px 0 0 var(--teal);
+    }
+
+    .game-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fcfeff;
+      padding: 8px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .game-card .muted {
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .focus-current-sentence {
+      display: none;
+    }
+
+    .game-card #startGameBtn {
+      min-height: 26px;
+      padding: 2px 6px;
+      font-size: 12px;
+      line-height: 1.1;
+    }
+
+    .game-sentence {
+      line-height: 1.35;
+      font-size: 15px;
+      min-height: 56px;
+      padding: 7px;
+      border-radius: 7px;
+      background: var(--wash);
+    }
+
+    .game-word {
+      display: inline-block;
+      margin: 0 1px 4px 0;
+      padding: 0 4px;
+      border-radius: 5px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .game-word.pending {
+      min-width: 34px;
+      color: transparent;
+      background: #dbe4ee;
+    }
+
+    .game-word.current {
+      outline: 2px solid var(--amber);
+      outline-offset: 2px;
+    }
+
+    .choice-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .choice {
+      font-size: 12px;
+      min-height: 26px;
+      padding: 2px 6px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      border: 1px solid #9db8ff;
+      border-radius: 999px;
+    }
+
+    .choice.wrong {
+      background: var(--rose-soft);
+      color: var(--rose);
+      border-color: #f3a8ba;
+    }
+
+    .progress {
+      height: 10px;
+      background: var(--wash);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--green), var(--teal));
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: #111827;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+      z-index: 10;
+      max-width: min(520px, calc(100% - 24px));
+      text-align: center;
+    }
+
+    .toast.show { opacity: 1; }
+
+    .compact-toolbar .toolbar-label,
+    .utility-body,
+    textarea,
+    input,
+    select,
+    .mini-file,
+    .stat,
+    .pill,
+    .mode-btn,
+    .lrc-line,
+    .reader,
+    .game-card,
+    .game-sentence,
+    .game-word,
+    .reference-panel details {
+      background: rgba(12, 27, 47, .96);
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .section,
+    .audio-panel {
+      background: linear-gradient(180deg, rgba(13, 28, 48, .96), rgba(8, 17, 31, .98));
+      border-color: var(--line);
+    }
+
+    .main-panel,
+    .sidebar {
+      background: rgba(8, 17, 31, .94);
+      border-color: var(--line);
+    }
+
+    .settings-toggle,
+    .mini-file label,
+    .speed-btn,
+    .stat span {
+      color: var(--muted);
+    }
+
+    .btn-soft {
+      background: #152941;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .btn-amber {
+      background: var(--amber-soft);
+      color: #fde68a;
+      border: 1px solid #7c5a1c;
+    }
+
+    .btn-rose {
+      background: var(--rose-soft);
+      color: #fecdd3;
+      border: 1px solid #7f1d2d;
+    }
+
+    .reference-panel summary,
+    .lrc-line.active,
+    .sentence.current {
+      background: rgba(16, 47, 91, .85);
+      color: #eaf6ff;
+    }
+
+    .reference-body {
+      color: #dbeafe;
+    }
+
+    .word.revealed {
+      color: var(--ink);
+    }
+
+    body.light-mode {
+      --ink: #111827;
+      --muted: #64748b;
+      --line: #cfe0f2;
+      --paper: #ffffff;
+      --wash: #f4f8fd;
+      --blue: #0b63e5;
+      --blue-soft: #eaf3ff;
+      --green: #15803d;
+      --green-soft: #e9f8ef;
+      --amber: #b45309;
+      --amber-soft: #fff3d7;
+      --rose: #be123c;
+      --rose-soft: #ffe8ee;
+      --teal: #0f766e;
+      --shadow: 0 18px 50px rgba(15, 73, 132, 0.12);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(11, 99, 229, .16), transparent 28%),
+        radial-gradient(circle at 92% 4%, rgba(15, 159, 154, .13), transparent 24%),
+        linear-gradient(180deg, #f7fbff 0%, #eef7fb 100%);
+    }
+
+    body.light-mode .compact-toolbar .toolbar-label,
+    body.light-mode .utility-body,
+    body.light-mode textarea,
+    body.light-mode input,
+    body.light-mode select,
+    body.light-mode .mini-file,
+    body.light-mode .stat,
+    body.light-mode .pill,
+    body.light-mode .mode-btn,
+    body.light-mode .lrc-line,
+    body.light-mode .reader,
+    body.light-mode .game-card,
+    body.light-mode .game-sentence,
+    body.light-mode .game-word,
+    body.light-mode .reference-panel details {
+      background: #ffffff;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    body.light-mode .section,
+    body.light-mode .audio-panel {
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(250,253,255,.96));
+      border-color: var(--line);
+    }
+
+    body.light-mode .main-panel,
+    body.light-mode .sidebar {
+      background: var(--paper);
+      border-color: var(--line);
+    }
+
+    body.light-mode .settings-toggle,
+    body.light-mode .mini-file label,
+    body.light-mode .speed-btn,
+    body.light-mode .stat span {
+      color: #334155;
+    }
+
+    body.light-mode .btn-soft {
+      background: var(--wash);
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    body.light-mode .btn-amber {
+      background: var(--amber-soft);
+      color: var(--amber);
+      border-color: #f3d899;
+    }
+
+    body.light-mode .btn-rose {
+      background: var(--rose-soft);
+      color: var(--rose);
+      border-color: #f3a8ba;
+    }
+
+    body.light-mode .reference-panel summary,
+    body.light-mode .lrc-line.active,
+    body.light-mode .sentence.current {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    body.light-mode .reference-body {
+      color: #334155;
+    }
+
+    .game-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .game-header h2 {
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .game-top-actions {
+      display: grid;
+      grid-template-columns: repeat(4, max-content);
+      gap: 7px;
+      justify-content: end;
+      align-items: center;
+    }
+
+    .game-top-actions button {
+      min-height: 26px;
+      padding: 2px 8px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .game-button-strip {
+      display: block;
+    }
+
+    .game-button-strip > .choice-row {
+      display: grid;
+    }
+
+    body.focus-game {
+      overflow: hidden;
+      background: #000;
+    }
+
+    body.focus-game .sidebar,
+    body.focus-game .topbar,
+    body.focus-game .workspace > div:first-child,
+    body.focus-game .game-section ~ .section,
+    body.focus-game .reference-panel {
+      display: none;
+    }
+
+    body.focus-game .app,
+    body.focus-game .main-panel,
+    body.focus-game .workspace,
+    body.focus-game .workspace > div,
+    body.focus-game .game-section {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      display: block;
+      border: 0;
+      box-shadow: none;
+      background: #000;
+    }
+
+    body.focus-game .app {
+      min-height: 100dvh;
+    }
+
+    body.focus-game .game-section {
+      min-height: 100dvh;
+      padding: max(56px, env(safe-area-inset-top)) clamp(12px, 3vw, 28px) max(18px, env(safe-area-inset-bottom));
+      color: #fff;
+      display: grid;
+      align-content: center;
+    }
+
+    body.focus-game .game-header {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      margin-bottom: clamp(12px, 2vw, 22px);
+      width: min(1040px, 100%);
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    body.focus-game .game-header h2 {
+      font-size: clamp(22px, 4.8vw, 44px);
+      color: #fff;
+    }
+
+    body.focus-game .game-top-actions {
+      grid-template-columns: repeat(4, max-content);
+      gap: clamp(8px, 1.8vw, 18px);
+    }
+
+    body.focus-game .game-top-actions button {
+      min-height: clamp(34px, 5vw, 54px);
+      padding: 0 clamp(10px, 2vw, 22px);
+      font-size: clamp(14px, 2.1vw, 22px);
+      border-radius: 999px;
+    }
+
+    body.focus-game .game-card {
+      border: 0;
+      background: #000;
+      padding: 0;
+      gap: clamp(14px, 2.5vw, 26px);
+      width: min(1040px, 100%);
+      margin: 0 auto;
+    }
+
+    body.focus-game .game-card .muted {
+      color: #dbeafe;
+      font-size: clamp(14px, 2.2vw, 24px);
+    }
+
+    body.focus-game .focus-current-sentence {
+      display: block;
+      width: min(1040px, 100%);
+      margin: 0 auto;
+      padding: clamp(8px, 1.5vw, 16px) clamp(10px, 2vw, 20px);
+      border: 1px solid #374151;
+      border-radius: clamp(8px, 1.4vw, 16px);
+      background: #0b1220;
+      color: #e5e7eb;
+      font-size: clamp(16px, 2.8vw, 32px);
+      line-height: 1.35;
+    }
+
+    body.focus-game .game-card #startGameBtn {
+      min-height: clamp(34px, 5vw, 54px);
+      padding: 0 clamp(14px, 2vw, 24px);
+      font-size: clamp(14px, 2.1vw, 22px);
+      border-radius: 999px;
+    }
+
+    body.focus-game .game-sentence {
+      min-height: clamp(168px, 30vh, 360px);
+      padding: clamp(14px, 3vw, 34px);
+      font-size: clamp(30px, 5.8vw, 76px);
+      line-height: 1.32;
+      color: #fff;
+      background: #050505;
+      border: 1px solid #1f2937;
+    }
+
+    body.focus-game .game-word {
+      margin: 0 .16em .28em 0;
+      padding: .02em .2em;
+      border-color: #475569;
+      background: #111827;
+    }
+
+    body.focus-game .game-word.pending {
+      min-width: 1.9em;
+      background: #1f2937;
+    }
+
+    body.focus-game .choice-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(14px, 4vw, 46px);
+      max-width: min(980px, 100%);
+      margin: 0 auto;
+    }
+
+    body.focus-game .choice {
+      min-height: clamp(68px, 13vw, 132px);
+      font-size: clamp(30px, 7.5vw, 92px);
+      border-radius: clamp(12px, 2vw, 24px);
+      background: #082f49;
+      color: #fff;
+      border: 2px solid #38bdf8;
+      box-shadow: 0 12px 32px rgba(14, 165, 233, .16);
+    }
+
+    body.focus-game .progress {
+      height: 12px;
+      background: #111827;
+      border-color: #374151;
+    }
+
+    body.light-mode.focus-game {
+      background: #f7fbff;
+    }
+
+    body.light-mode.focus-game .app,
+    body.light-mode.focus-game .main-panel,
+    body.light-mode.focus-game .workspace,
+    body.light-mode.focus-game .workspace > div,
+    body.light-mode.focus-game .game-section,
+    body.light-mode.focus-game .game-card {
+      background: #f7fbff;
+      color: #111827;
+    }
+
+    body.light-mode.focus-game .game-header h2,
+    body.light-mode.focus-game .game-card .muted,
+    body.light-mode.focus-game .game-section {
+      color: #111827;
+    }
+
+    body.light-mode.focus-game .focus-current-sentence {
+      background: #ffffff;
+      color: #111827;
+      border-color: #cfe0f2;
+    }
+
+    body.light-mode.focus-game .game-sentence {
+      background: #ffffff;
+      color: #111827;
+      border-color: #cfe0f2;
+    }
+
+    body.light-mode.focus-game .game-word {
+      background: #f8fbff;
+      color: #111827;
+      border-color: #cfe0f2;
+    }
+
+    body.light-mode.focus-game .game-word.pending {
+      background: #d9e1ea;
+    }
+
+    body.light-mode.focus-game .choice {
+      background: #eaf3ff;
+      color: #0b63e5;
+      border-color: #8bb8ff;
+      box-shadow: 0 12px 32px rgba(11, 99, 229, .12);
+    }
+
+    body.light-mode.focus-game .progress {
+      background: #eaf3ff;
+      border-color: #cfe0f2;
+    }
+
+    @media (max-width: 980px) {
+      .workspace, .topbar {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+        max-height: none;
+      }
+      .stats {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        width: calc(100% - 10px);
+        margin: 5px auto;
+        gap: 8px;
+      }
+      .main-panel, .sidebar, .section {
+        padding: 10px;
+      }
+      .sidebar {
+        padding-top: 6px;
+        padding-bottom: 6px;
+      }
+      .brand {
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+      }
+      h1 {
+        font-size: 18px;
+      }
+      .compact-toolbar {
+        grid-template-columns: 52px 72px 44px;
+      }
+      .compact-toolbar .toolbar-label {
+        font-size: 12px;
+      }
+      .file-strip {
+        grid-template-columns: 1fr;
+      }
+      .utility-body {
+        top: 96px;
+        width: calc(100vw - 12px);
+        padding: 8px;
+        gap: 7px;
+        border-radius: 18px;
+      }
+      .utility-body textarea {
+        min-height: 96px;
+        max-height: 142px;
+      }
+      .mini-file input[type="file"] {
+        min-height: 34px;
+        padding: 8px 6px;
+        font-size: 11px;
+        line-height: 1.2;
+      }
+      .player-row {
+        grid-template-columns: minmax(0, 1fr) 76px;
+      }
+      .speed-group {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .mode-group { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .choice-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .topbar {
+        gap: 8px;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+      }
+      .stat {
+        min-width: 42px;
+        padding: 2px 5px;
+      }
+      .brand {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+      }
+      .compact-toolbar {
+        grid-column: auto;
+        justify-self: end;
+      }
+      .reference-panel {
+        grid-template-columns: 1fr;
+      }
+      .section + .section { margin-top: 8px; }
+      .reader:not(.empty-tip) {
+        font-size: 15px;
+      }
+      .game-sentence {
+        font-size: 15px;
+      }
+      body.focus-game .game-section {
+        padding-top: max(72px, env(safe-area-inset-top));
+      }
+      body.focus-game .game-header {
+        grid-template-columns: minmax(72px, auto) minmax(0, 1fr);
+      }
+      body.focus-game .game-top-actions {
+        overflow-x: auto;
+        justify-content: start;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+      }
+      body.focus-game .game-top-actions::-webkit-scrollbar {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><img src="site-icon-32.png" alt=""></div>
+        <div>
+          <div class="title-row">
+            <h1>快速背诵助手</h1>
+            <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换白天黑夜">
+              <img id="themeIcon" src="day.png" alt="">
+            </button>
+          </div>
+          <p class="muted">Speed Memorizer</p>
+        </div>
+      <div class="compact-toolbar">
+        <button class="toolbar-label" id="loadLessonLabel" type="button">课程号</button>
+        <input id="lessonNumber" type="text" value="III-45" aria-label="课程编号" inputmode="text">
+        <div class="utility-panel" id="settingsPanel">
+        <button class="settings-toggle" id="settingsToggle" type="button" aria-label="设置">
+          <img src="settings-icon.png" alt="">
+        </button>
+        <div class="utility-body">
+          <div class="file-strip">
+            <div class="mini-file">
+              <label for="txtFile">TXT课文</label>
+              <input id="txtFile" type="file" accept=".txt,text/plain">
+            </div>
+            <div class="mini-file">
+              <label for="mp3File">MP3音频</label>
+              <input id="mp3File" type="file" accept="audio/mpeg,audio/mp3,.mp3">
+            </div>
+            <div class="mini-file">
+              <label for="lrcFile">LRC字幕</label>
+              <input id="lrcFile" type="file" accept=".lrc,text/plain">
+            </div>
+          </div>
+          <div class="field">
+            <label for="textInput">手动粘贴课文</label>
+            <textarea id="textInput" placeholder="Paste English text here. Blank lines will become paragraphs."></textarea>
+          </div>
+          <div class="settings-actions">
+            <button class="btn-primary" id="applyTextBtn">添加</button>
+            <button class="btn-soft" id="sampleBtn">收起</button>
+          </div>
+        </div>
+      </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <div class="topbar">
+        <div>
+          <h1 id="lessonTitle">Lesson 45</h1>
+          <p class="muted" id="lessonSub">等待载入课文和音频</p>
+        </div>
+      </div>
+
+      <div class="workspace">
+        <div>
+          <section class="section audio-panel">
+            <div class="player-row">
+              <audio id="audio" controls></audio>
+              <div class="speed-group" id="speedGroup" aria-label="播放速度">
+                <button class="speed-btn" data-speed="0.6">0.6</button>
+                <button class="speed-btn" data-speed="0.8">0.8</button>
+                <button class="speed-btn active" data-speed="1">1.0</button>
+                <button class="speed-btn" data-speed="1.2">1.2</button>
+              </div>
+            </div>
+            <div class="lrc-box" id="lrcBox" style="margin-top:10px">
+              <div class="lrc-line active">LRC会在这里按句显示</div>
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="row" style="justify-content:space-between">
+              <div>
+                <div class="section-title-line">
+                  <h2>逐句背诵</h2>
+                  <div class="stats">
+                    <div class="stat"><b id="sentenceCount">0</b><span>句子</span></div>
+                    <div class="stat"><b id="passCount">0</b><span>过关</span></div>
+                  </div>
+                </div>
+                <p class="muted" id="currentMeta">先载入课文</p>
+              </div>
+              <div class="row">
+                <button class="btn-soft" id="prevSentenceBtn">上一句</button>
+                <button class="btn-soft" id="nextSentenceBtn">下一句</button>
+              </div>
+            </div>
+            <div class="paragraph-tabs" id="paragraphTabs"></div>
+            <div class="sentence-list" id="sentenceTabs"></div>
+            <div class="mode-group" id="modeGroup" style="margin:6px 0">
+              <button class="mode-btn active" data-mode="full">全显示</button>
+              <button class="mode-btn" data-mode="half">随机覆盖</button>
+              <button class="mode-btn" data-mode="initial">首字母</button>
+              <button class="mode-btn" id="gameModeBtn" type="button">游戏</button>
+            </div>
+            <div id="reader" class="reader empty-tip">请从左侧载入课文。</div>
+          </section>
+        </div>
+
+        <div>
+          <section class="section game-section" id="gameSection">
+            <div class="game-header">
+              <h2>背诵游戏</h2>
+              <div class="game-top-actions">
+                <button class="btn-teal" id="repeatAudioBtn">听本句</button>
+                <button class="btn-amber" id="restartSentenceBtn">重来</button>
+                <button class="btn-rose" id="skipSentenceBtn">下一句</button>
+                <button class="btn-soft" id="focusGameBtn">专注模式</button>
+              </div>
+            </div>
+            <div class="game-card">
+              <div class="row" style="justify-content:space-between">
+                <p class="muted" id="gameStage">第一遍：看全句，点击每个词的正确首字母</p>
+                <button class="btn-green" id="startGameBtn">开始本句</button>
+              </div>
+              <div class="progress"><span id="gameProgress"></span></div>
+              <div class="focus-current-sentence" id="focusCurrentSentence">暂无</div>
+              <div id="gameSentence" class="game-sentence">选择一句后开始。</div>
+              <div class="game-button-strip">
+                <div id="choices" class="choice-row"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2>当前句</h2>
+            <p class="muted" id="currentSentenceText">暂无</p>
+          </section>
+        </div>
+      </div>
+      <section class="section reference-panel">
+        <details>
+          <summary>生词和短语</summary>
+          <div class="reference-body" id="wordsPanel">载入课文后显示。</div>
+        </details>
+        <details>
+          <summary>参考译文</summary>
+          <div class="reference-body" id="translationPanel">载入课文后显示。</div>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const state = {
+      lesson: 45,
+      courseKey: "III-45",
+      rawText: "",
+      sourceText: "",
+      lessonMeta: { lessonLine: "", englishTitle: "", chineseTitle: "", wordsText: "", translationText: "" },
+      paragraphs: [],
+      lrc: [],
+      lrcRepeat: {
+        active: false,
+        index: 0,
+        count: 0,
+        max: 3
+      },
+      suppressLrcScrollOnce: false,
+      currentParagraph: 0,
+      currentSentence: 0,
+      mode: "full",
+      passed: new Set(),
+      game: {
+        active: false,
+        pass: 1,
+        wordIndex: 0,
+        words: [],
+        revealed: []
+      }
+    };
+
+    const sampleText = `The sun is rising over the quiet town. Birds are singing in the trees. Tom opens his window and takes a deep breath.
+
+Today is his first day at a new school. He feels nervous, but he also feels excited. His mother smiles and says, "Be brave and be kind."
+
+At the school gate, Tom meets a boy named Jack. Jack says hello and shows him the classroom. Soon Tom knows that a new place can become familiar step by step.`;
+
+    const sampleLrc = `[00:00.00]The sun is rising over the quiet town.
+[00:04.00]Birds are singing in the trees.
+[00:08.00]Tom opens his window and takes a deep breath.
+[00:13.00]Today is his first day at a new school.
+[00:18.00]He feels nervous, but he also feels excited.
+[00:23.00]His mother smiles and says, "Be brave and be kind."
+[00:29.00]At the school gate, Tom meets a boy named Jack.
+[00:35.00]Jack says hello and shows him the classroom.
+[00:40.00]Soon Tom knows that a new place can become familiar step by step.`;
+
+    let lessonInputTimer = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function showToast(message) {
+      const toast = $("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function uniqueList(items) {
+      return [...new Set(items.filter(Boolean))];
+    }
+
+    function parseCourseInput(value) {
+      const raw = String(value || "").trim().toUpperCase().replace(/\s+/g, "");
+      const prefixed = raw.match(/^([IVX]+)[-_]?(\d{1,3})$/);
+      const numeric = raw.match(/^(\d{1,3})$/);
+      const book = prefixed ? prefixed[1] : "III";
+      const lessonToken = prefixed ? prefixed[2] : numeric ? numeric[1] : String(state.lesson || 45);
+      const lessonNumber = Math.max(1, Math.min(999, Number(lessonToken) || 45));
+      const plainKey = `${book}-${lessonNumber}`;
+      const paddedKey = `${book}-${String(lessonNumber).padStart(2, "0")}`;
+      const typedKey = `${book}-${lessonToken}`;
+      return {
+        book,
+        lessonNumber,
+        inputValue: typedKey,
+        fileKeys: uniqueList([typedKey, plainKey, paddedKey])
+      };
+    }
+
+    async function selectLesson(value) {
+      const course = parseCourseInput(value);
+      state.lesson = course.lessonNumber;
+      state.courseKey = course.inputValue;
+      $("lessonNumber").value = course.inputValue;
+      $("lessonTitle").textContent = `Lesson ${course.lessonNumber}`;
+      $("lessonSub").textContent = "正在调取课文、音频和LRC";
+      await tryLoadLessonFiles(course);
+    }
+
+    async function tryLoadLessonFiles(course) {
+      let loaded = false;
+      state.lrc = [];
+      renderLrc();
+      try {
+        const textResult = await fetchFirstTextEncoded(course.fileKeys.flatMap(key => [
+          `NCE3/${key}.txt`,
+          `NCE3/${key}.TXT`
+        ]));
+        const text = textResult.text;
+        if (text.trim()) {
+          const parsed = parseNce3Text(text);
+          $("textInput").value = parsed.body;
+          loadText(parsed.body, parsed);
+          loaded = true;
+        }
+      } catch (error) {}
+
+      try {
+        const lrcResult = await fetchFirstTextEncoded(course.fileKeys.flatMap(key => [
+          `NCE3/${key}.lrc`,
+          `NCE3/${key}.LRC`
+        ]));
+        const lrc = lrcResult.text;
+        state.lrc = parseLrc(lrc);
+        renderLrc();
+        loaded = true;
+      } catch (error) {}
+
+      const audio = $("audio");
+      audio.removeAttribute("src");
+      audio.innerHTML = course.fileKeys.flatMap(key => [
+        `<source src="NCE3/${key}.mp3" type="audio/mpeg">`,
+        `<source src="NCE3/${key}.MP3" type="audio/mpeg">`
+      ]).join("");
+      audio.load();
+      $("lessonSub").textContent = loaded
+        ? `已载入 Lesson ${course.lessonNumber} 的课文、音频或LRC`
+        : "";
+    }
+
+    async function fetchFirstTextEncoded(paths) {
+      let lastError = null;
+      for (const path of paths) {
+        try {
+          return { text: await fetchTextEncoded(path), path };
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      throw lastError || new Error("not found");
+    }
+
+    async function fetchTextEncoded(path) {
+      const response = await fetch(path, { cache: "no-store" });
+      if (!response.ok) throw new Error("not found");
+      const buffer = await response.arrayBuffer();
+      const decoders = ["gb18030", "gbk", "utf-8"];
+      for (const encoding of decoders) {
+        try {
+          const decoded = new TextDecoder(encoding).decode(buffer);
+          if (decoded && !decoded.includes(" ")) return decoded;
+        } catch (error) {}
+      }
+      return new TextDecoder("utf-8").decode(buffer);
+    }
+
+    function parseNce3Text(text) {
+      const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      const lines = normalized.split("\n");
+      const meaningful = lines.map(line => line.trim()).filter(Boolean);
+      const newWordsIndex = lines.findIndex(line => /New\s+words\s+and\s+expressions/i.test(line));
+      const translationIndex = lines.findIndex(line => /参考译文|譯文|译文|蜿り/.test(line));
+      const beforeWordsRaw = newWordsIndex >= 0 ? lines.slice(0, newWordsIndex) : lines;
+      const wordsLines = newWordsIndex >= 0
+        ? lines.slice(newWordsIndex, translationIndex > newWordsIndex ? translationIndex : lines.length)
+        : [];
+      const translationLines = translationIndex >= 0 ? lines.slice(translationIndex + 1) : [];
+      const beforeWords = beforeWordsRaw.map(line => line.trim());
+      const headerLines = beforeWords.filter(Boolean).slice(0, 3);
+      const headerEnd = beforeWords.findIndex(line => line === headerLines[2]);
+      const bodyLines = beforeWordsRaw
+        .slice(headerEnd >= 0 ? headerEnd + 1 : 3)
+        .map(line => line.trim())
+        .filter(Boolean);
+      const body = bodyLines.join("\n").trim();
+      return {
+        fullText: normalized,
+        lessonLine: headerLines[0] || meaningful[0] || "",
+        englishTitle: headerLines[1] || "",
+        chineseTitle: headerLines[2] || "",
+        wordsText: wordsLines.map(line => line.trim()).filter(Boolean).join("\n"),
+        translationText: translationLines.map(line => line.trim()).filter(Boolean).join("\n"),
+        body: body || beforeWords.filter(Boolean).slice(3).join("\n").trim()
+      };
+    }
+
+    function readFileAsText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = reject;
+        reader.readAsText(file);
+      });
+    }
+
+    function readFileEncoded(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const buffer = reader.result;
+          const decoders = ["gb18030", "gbk", "utf-8"];
+          for (const encoding of decoders) {
+            try {
+              const decoded = new TextDecoder(encoding).decode(buffer);
+              if (decoded && !decoded.includes(" ")) {
+                resolve(decoded);
+                return;
+              }
+            } catch (error) {}
+          }
+          resolve(new TextDecoder("utf-8").decode(buffer));
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function splitParagraphs(text) {
+      let paragraphs = text
+        .replace(/\r\n/g, "\n")
+        .split(/\n\s*\n+/)
+        .map(p => p.trim())
+        .filter(Boolean);
+      if (paragraphs.length <= 1 && /\n/.test(text)) {
+        paragraphs = text
+          .replace(/\r\n/g, "\n")
+          .split(/\n+/)
+          .map(p => p.trim())
+          .filter(Boolean);
+      }
+      return paragraphs.map((paragraph, pIndex) => ({
+          index: pIndex,
+          text: paragraph,
+          sentences: splitSentences(paragraph)
+        }))
+        .filter(p => p.sentences.length);
+    }
+
+    function splitSentences(paragraph) {
+      const parts = paragraph
+        .replace(/\s+/g, " ")
+        .match(/[^.!?。！？]+[.!?。！？"']*|[^.!?。！？]+$/g);
+      return (parts || [paragraph]).map(s => s.trim()).filter(Boolean);
+    }
+
+    function loadText(text, meta = null) {
+      state.rawText = text.trim();
+      state.sourceText = meta?.fullText || text;
+      if (meta) {
+        state.lessonMeta = {
+          lessonLine: meta.lessonLine || "",
+          englishTitle: meta.englishTitle || "",
+          chineseTitle: meta.chineseTitle || "",
+          wordsText: meta.wordsText || "",
+          translationText: meta.translationText || ""
+        };
+      } else {
+        state.lessonMeta = { lessonLine: "", englishTitle: "", chineseTitle: "", wordsText: "", translationText: "" };
+      }
+      state.paragraphs = splitParagraphs(state.rawText);
+      state.currentParagraph = 0;
+      state.currentSentence = 0;
+      state.passed.clear();
+      state.game.active = false;
+      state.lrcRepeat.active = false;
+      if (!state.paragraphs.length) {
+        showToast("没有识别到有效课文");
+        return;
+      }
+      if (state.lessonMeta.englishTitle) {
+        $("lessonTitle").textContent = `${state.lessonMeta.lessonLine || `Lesson ${state.lesson}`} · ${state.lessonMeta.englishTitle}`;
+        $("lessonSub").textContent = state.lessonMeta.chineseTitle || "已提取英文正文用于背诵";
+      }
+      renderAll();
+      showToast("课文已载入");
+    }
+
+    function parseLrc(text) {
+      const lines = text.split(/\r?\n/);
+      const result = [];
+      const timeReg = /\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\]/g;
+      lines.forEach(line => {
+        const content = line.replace(timeReg, "").trim();
+        let match;
+        while ((match = timeReg.exec(line)) !== null) {
+          const min = Number(match[1]);
+          const sec = Number(match[2]);
+          const ms = Number((match[3] || "0").padEnd(3, "0"));
+          result.push({ time: min * 60 + sec + ms / 1000, text: content });
+        }
+      });
+      return result.sort((a, b) => a.time - b.time);
+    }
+
+    function renderAll() {
+      renderStats();
+      renderParagraphTabs();
+      renderSentenceTabs();
+      renderReader();
+      renderLrc();
+      updateCurrentInfo();
+      renderReferencePanels();
+      renderGameIdle();
+    }
+
+    function renderReferencePanels() {
+      $("wordsPanel").textContent = state.lessonMeta.wordsText || "本课没有识别到生词和短语。";
+      $("translationPanel").textContent = state.lessonMeta.translationText || "本课没有识别到参考译文。";
+    }
+
+    function renderStats() {
+      const totalSentences = state.paragraphs.reduce((sum, p) => sum + p.sentences.length, 0);
+      $("sentenceCount").textContent = totalSentences;
+      $("passCount").textContent = state.passed.size;
+    }
+
+    function renderParagraphTabs() {
+      const box = $("paragraphTabs");
+      box.innerHTML = "";
+      state.paragraphs.forEach((paragraph, index) => {
+        const btn = document.createElement("button");
+        btn.className = "pill";
+        btn.textContent = `第${index + 1}段`;
+        btn.classList.toggle("active", index === state.currentParagraph);
+        btn.addEventListener("click", () => {
+          state.currentParagraph = index;
+          state.currentSentence = 0;
+          state.game.active = false;
+          renderAll();
+          syncAudioToCurrentSentence();
+        });
+        box.appendChild(btn);
+      });
+    }
+
+    function renderSentenceTabs() {
+      const box = $("sentenceTabs");
+      box.innerHTML = "";
+      const paragraph = currentParagraph();
+      if (!paragraph) return;
+      paragraph.sentences.forEach((sentence, index) => {
+        const btn = document.createElement("button");
+        btn.className = "pill";
+        btn.textContent = `句${index + 1}`;
+        btn.classList.toggle("active", index === state.currentSentence);
+        btn.addEventListener("click", () => {
+          state.currentSentence = index;
+          state.game.active = false;
+          renderAll();
+          syncAudioToCurrentSentence();
+        });
+        box.appendChild(btn);
+      });
+    }
+
+    function renderReader() {
+      const reader = $("reader");
+      const paragraph = currentParagraph();
+      if (!paragraph) {
+        reader.classList.add("empty-tip");
+        reader.textContent = "请从左侧载入课文。";
+        return;
+      }
+      reader.classList.remove("empty-tip");
+      reader.innerHTML = paragraph.sentences.map((sentence, sIndex) => {
+        const sentenceHtml = renderSentenceWords(sentence, state.mode, sIndex === state.currentSentence);
+        return `<span class="sentence ${sIndex === state.currentSentence ? "current" : ""}" data-sentence="${sIndex}">${sentenceHtml}</span> `;
+      }).join("");
+
+      reader.querySelectorAll(".sentence").forEach(el => {
+        el.addEventListener("click", (event) => {
+          state.currentSentence = Number(el.dataset.sentence);
+          if (event.target.classList.contains("word")) {
+            event.target.classList.remove("hidden", "initial");
+            event.target.classList.add("revealed");
+            event.target.textContent = event.target.dataset.word;
+          }
+          updateCurrentInfo();
+          renderSentenceTabs();
+          syncAudioToCurrentSentence();
+        });
+      });
+    }
+
+    function renderSentenceWords(sentence, mode, isCurrent) {
+      return tokenize(sentence).map(token => {
+        if (!token.isWord) return escapeHtml(token.text);
+        let display = token.text;
+        let cls = "word";
+        if (mode === "half" && Math.random() < 0.5) {
+          cls += " hidden";
+        } else if (mode === "initial") {
+          cls += " initial";
+          display = token.text[0] + "_".repeat(Math.max(0, token.text.length - 1));
+        }
+        if (mode === "full") cls += " revealed";
+        const title = isCurrent ? "当前句" : "";
+        return `<span class="${cls}" data-word="${escapeAttr(token.text)}" title="${title}">${escapeHtml(display)}</span>`;
+      }).join("");
+    }
+
+    function tokenize(sentence) {
+      const tokens = [];
+      const reg = /[A-Za-z]+(?:'[A-Za-z]+)?|[^A-Za-z]+/g;
+      let match;
+      while ((match = reg.exec(sentence)) !== null) {
+        const text = match[0];
+        tokens.push({ text, isWord: /^[A-Za-z]/.test(text) });
+      }
+      return tokens;
+    }
+
+    function currentParagraph() {
+      return state.paragraphs[state.currentParagraph];
+    }
+
+    function currentSentence() {
+      const paragraph = currentParagraph();
+      return paragraph ? paragraph.sentences[state.currentSentence] : "";
+    }
+
+    function updateCurrentInfo() {
+      const paragraph = currentParagraph();
+      const sentence = currentSentence();
+      $("currentMeta").textContent = paragraph
+        ? `第${state.currentParagraph + 1}段 / 第${state.currentSentence + 1}句`
+        : "先载入课文";
+      $("currentSentenceText").textContent = sentence || "暂无";
+      $("focusCurrentSentence").textContent = sentence || "暂无";
+    }
+
+    function renderLrc() {
+      const box = $("lrcBox");
+      box.innerHTML = "";
+      if (!state.lrc.length) {
+        const div = document.createElement("div");
+        div.className = "lrc-line active";
+        div.textContent = "LRC会在这里按句显示";
+        box.appendChild(div);
+        return;
+      }
+      state.lrc.forEach((line, index) => {
+        const div = document.createElement("div");
+        div.className = "lrc-line";
+        div.dataset.index = index;
+        div.textContent = line.text || formatTime(line.time);
+        div.addEventListener("click", () => {
+          startLrcRepeat(index);
+        });
+        box.appendChild(div);
+      });
+      highlightLrc(getNearestLrcIndex($("audio").currentTime || 0));
+    }
+
+    function updateLrcWindow(activeIndex, shouldScroll = true) {
+      if (!state.lrc.length) return;
+      highlightLrc(activeIndex, shouldScroll);
+    }
+
+    function highlightLrc(index, shouldScroll = true) {
+      document.querySelectorAll(".lrc-line").forEach(line => {
+        line.classList.toggle("active", Number(line.dataset.index) === index);
+      });
+      const active = document.querySelector(`.lrc-line[data-index="${index}"]`);
+      if (active && shouldScroll) active.scrollIntoView({ block: "nearest" });
+    }
+
+    function getNearestLrcIndex(time) {
+      let active = 0;
+      state.lrc.forEach((line, index) => {
+        if (line.time <= time) active = index;
+      });
+      return active;
+    }
+
+    function startLrcRepeat(index) {
+      if (!state.lrc[index]) return;
+      state.lrcRepeat = {
+        active: true,
+        index,
+        count: 0,
+        max: 3
+      };
+      playLrcLine(index);
+    }
+
+    function playLrcLine(index) {
+      const line = state.lrc[index];
+      if (!line || !Number.isFinite(line.time)) {
+        stopLrcRepeat();
+        return;
+      }
+      $("audio").currentTime = line.time;
+      highlightLrc(index);
+      setCurrentByFlatIndex(index);
+      $("audio").play().catch(() => showToast("请先点击播放器允许播放"));
+    }
+
+    function stopLrcRepeat() {
+      state.lrcRepeat.active = false;
+      $("audio").pause();
+    }
+
+    function handleLrcRepeatProgress() {
+      if (!state.lrcRepeat.active || !state.lrc.length) return;
+      const audio = $("audio");
+      const index = state.lrcRepeat.index;
+      const current = state.lrc[index];
+      const next = state.lrc[index + 1];
+      const endTime = next && Number.isFinite(next.time)
+        ? next.time
+        : Math.min(audio.duration || current.time + 6, current.time + 6);
+      if (audio.currentTime < endTime - 0.08) return;
+      state.lrcRepeat.count += 1;
+      if (state.lrcRepeat.count < state.lrcRepeat.max) {
+        playLrcLine(index);
+        return;
+      }
+      const nextIndex = index + 1;
+      if (!state.lrc[nextIndex]) {
+        stopLrcRepeat();
+        showToast("文章朗读结束");
+        return;
+      }
+      state.lrcRepeat.index = nextIndex;
+      state.lrcRepeat.count = 0;
+      playLrcLine(nextIndex);
+    }
+
+    function syncAudioToCurrentSentence(shouldScroll = true) {
+      if (!state.lrc.length) return;
+      const flatIndex = flatSentenceIndex();
+      const line = state.lrc[Math.min(flatIndex, state.lrc.length - 1)];
+      if (line && Number.isFinite(line.time)) {
+        if (!shouldScroll) state.suppressLrcScrollOnce = true;
+        $("audio").currentTime = line.time;
+        updateLrcWindow(Math.min(flatIndex, state.lrc.length - 1), shouldScroll);
+      }
+    }
+
+    function flatSentenceIndex() {
+      let index = 0;
+      for (let p = 0; p < state.currentParagraph; p += 1) {
+        index += state.paragraphs[p].sentences.length;
+      }
+      return index + state.currentSentence;
+    }
+
+    function setCurrentByFlatIndex(flatIndex) {
+      let cursor = 0;
+      for (let p = 0; p < state.paragraphs.length; p += 1) {
+        const sentenceCount = state.paragraphs[p].sentences.length;
+        if (flatIndex < cursor + sentenceCount) {
+          state.currentParagraph = p;
+          state.currentSentence = flatIndex - cursor;
+          renderParagraphTabs();
+          renderSentenceTabs();
+          renderReader();
+          updateCurrentInfo();
+          return;
+        }
+        cursor += sentenceCount;
+      }
+    }
+
+    function renderGameIdle() {
+      const sentence = currentSentence();
+      $("gameSentence").textContent = sentence || "选择一句后开始。";
+      $("choices").innerHTML = "";
+      $("gameProgress").style.width = "0%";
+      $("gameStage").textContent = "第一遍：看全句，点击每个词的正确首字母";
+    }
+
+    function startGame(pass = 1) {
+      const sentence = currentSentence();
+      const words = tokenize(sentence).filter(t => t.isWord).map(t => t.text);
+      if (!words.length) {
+        showToast("当前句没有可练习的英文单词");
+        return;
+      }
+      state.game = {
+        active: true,
+        pass,
+        wordIndex: 0,
+        words,
+        revealed: new Array(words.length).fill(false)
+      };
+      syncAudioToCurrentSentence();
+      renderGame();
+    }
+
+    function renderGame() {
+      const game = state.game;
+      const sentence = currentSentence();
+      if (!game.active) {
+        renderGameIdle();
+        return;
+      }
+      $("gameStage").textContent = game.pass === 1
+        ? "第一遍：看全句，逐词点正确首字母"
+        : "第二遍：全文覆盖，逐词回忆首字母";
+      const tokens = tokenize(sentence);
+      let wordCounter = -1;
+      $("gameSentence").innerHTML = tokens.map(token => {
+        if (!token.isWord) return escapeHtml(token.text);
+        wordCounter += 1;
+        const isRevealed = game.revealed[wordCounter] || (game.pass === 1 && wordCounter > game.wordIndex);
+        const isCurrent = wordCounter === game.wordIndex;
+        if (game.pass === 1) {
+          return `<span class="game-word ${isCurrent ? "current" : ""}">${escapeHtml(token.text)}</span>`;
+        }
+        return `<span class="game-word ${isRevealed ? "" : "pending"} ${isCurrent ? "current" : ""}">${escapeHtml(token.text)}</span>`;
+      }).join("");
+      $("gameProgress").style.width = `${Math.round((game.wordIndex / game.words.length) * 100)}%`;
+      renderChoices();
+    }
+
+    function renderChoices() {
+      const game = state.game;
+      const word = game.words[game.wordIndex];
+      const choices = getLetterChoices(word);
+      const box = $("choices");
+      box.innerHTML = "";
+      choices.forEach(letter => {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.textContent = letter;
+        btn.addEventListener("click", () => chooseLetter(btn, letter));
+        box.appendChild(btn);
+      });
+    }
+
+    function getLetterChoices(word) {
+      const correct = word[0].toLowerCase();
+      const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
+      const pool = alphabet.filter(l => l !== correct);
+      shuffle(pool);
+      const choices = [correct, pool[0], pool[1]];
+      return shuffle(choices).map(l => preserveCase(l, word[0]));
+    }
+
+    function chooseLetter(button, letter) {
+      const game = state.game;
+      const word = game.words[game.wordIndex];
+      if (!word) return;
+      if (letter.toLowerCase() !== word[0].toLowerCase()) {
+        button.classList.add("wrong");
+        setTimeout(() => button.classList.remove("wrong"), 280);
+        return;
+      }
+      game.revealed[game.wordIndex] = true;
+      game.wordIndex += 1;
+      if (game.wordIndex >= game.words.length) {
+        $("gameProgress").style.width = "100%";
+        if (game.pass === 1) {
+          showToast("第一遍完成，进入覆盖回忆");
+          startGame(2);
+        } else {
+          markSentencePassed();
+          showToast("本句过关，进入下一句");
+          moveSentence(1, true);
+        }
+        return;
+      }
+      renderGame();
+    }
+
+    function markSentencePassed() {
+      state.passed.add(`${state.currentParagraph}-${state.currentSentence}`);
+      renderStats();
+    }
+
+    function moveSentence(delta, autoStartGame = false) {
+      const paragraph = currentParagraph();
+      if (!paragraph) return;
+      let p = state.currentParagraph;
+      let s = state.currentSentence + delta;
+      if (s >= paragraph.sentences.length) {
+        p += 1;
+        s = 0;
+      }
+      if (s < 0) {
+        p -= 1;
+        if (p >= 0) s = state.paragraphs[p].sentences.length - 1;
+      }
+      if (p < 0 || p >= state.paragraphs.length) {
+        showToast("已经到课文边界");
+        state.game.active = false;
+        renderAll();
+        return;
+      }
+      state.currentParagraph = p;
+      state.currentSentence = s;
+      state.game.active = false;
+      renderAll();
+      syncAudioToCurrentSentence(false);
+      if (autoStartGame) setTimeout(() => startGame(1), 250);
+    }
+
+    function repeatCurrentAudio() {
+      syncAudioToCurrentSentence();
+      const audio = $("audio");
+      if (audio.src) audio.play().catch(() => showToast("请先手动允许音频播放"));
+    }
+
+    function setTheme(mode) {
+      const isLight = mode === "light";
+      document.body.classList.toggle("light-mode", isLight);
+      const btn = $("themeToggle");
+      if (btn) {
+        const icon = $("themeIcon");
+        if (icon) icon.src = isLight ? "night.png" : "day.png";
+        btn.setAttribute("aria-label", isLight ? "切换到黑夜模式" : "切换到白天模式");
+        btn.title = isLight ? "黑夜模式" : "白天模式";
+        btn.setAttribute("aria-pressed", String(isLight));
+      }
+      try {
+        localStorage.setItem("reciteTheme", isLight ? "light" : "dark");
+      } catch (error) {}
+    }
+
+    function setFocusGameMode(active) {
+      document.body.classList.toggle("focus-game", active);
+      const btn = $("focusGameBtn");
+      if (btn) btn.textContent = active ? "返回主页面" : "专注模式";
+      if (active && document.documentElement.requestFullscreen && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+      if (!active && document.exitFullscreen && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function formatTime(time) {
+      const min = Math.floor(time / 60);
+      const sec = Math.floor(time % 60);
+      return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function escapeAttr(text) {
+      return escapeHtml(text).replace(/'/g, "&#39;");
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function preserveCase(letter, original) {
+      return original === original.toUpperCase() ? letter.toUpperCase() : letter;
+    }
+
+    function bindEvents() {
+      $("applyTextBtn").addEventListener("click", () => {
+        loadText($("textInput").value);
+        const panel = document.querySelector(".utility-panel");
+        if (panel) panel.classList.remove("open");
+      });
+      $("settingsToggle").addEventListener("click", () => {
+        const panel = $("settingsPanel");
+        if (panel) panel.classList.toggle("open");
+      });
+      $("themeToggle").addEventListener("click", () => {
+        const nextMode = document.body.classList.contains("light-mode") ? "dark" : "light";
+        setTheme(nextMode);
+      });
+      $("loadLessonLabel").addEventListener("click", () => selectLesson($("lessonNumber").value));
+      $("lessonNumber").addEventListener("input", () => {
+        clearTimeout(lessonInputTimer);
+        lessonInputTimer = setTimeout(() => {
+          const value = $("lessonNumber").value.trim();
+          if (value) selectLesson(value);
+        }, 450);
+      });
+      $("lessonNumber").addEventListener("keydown", (event) => {
+        clearTimeout(lessonInputTimer);
+        if (event.key === "Enter") selectLesson($("lessonNumber").value);
+      });
+      $("lessonNumber").addEventListener("change", () => selectLesson($("lessonNumber").value));
+      $("sampleBtn").addEventListener("click", () => {
+        const panel = document.querySelector(".utility-panel");
+        if (panel) panel.classList.remove("open");
+      });
+      $("txtFile").addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const text = await readFileEncoded(file);
+        const parsed = /New\s+words\s+and\s+expressions/i.test(text) ? parseNce3Text(text) : null;
+        $("textInput").value = parsed ? parsed.body : text;
+        loadText(parsed ? parsed.body : text, parsed);
+        const panel = $("settingsPanel");
+        if (panel) panel.classList.remove("open");
+      });
+      $("lrcFile").addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const lrcText = await readFileAsText(file);
+        state.lrc = parseLrc(lrcText);
+        renderLrc();
+        showToast("LRC已载入");
+        const panel = $("settingsPanel");
+        if (panel) panel.classList.remove("open");
+      });
+      $("mp3File").addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        $("audio").src = URL.createObjectURL(file);
+        $("audio").load();
+        showToast("MP3已载入");
+        const panel = $("settingsPanel");
+        if (panel) panel.classList.remove("open");
+      });
+      $("speedGroup").addEventListener("click", (event) => {
+        const btn = event.target.closest("button[data-speed]");
+        if (!btn) return;
+        $("audio").playbackRate = Number(btn.dataset.speed);
+        document.querySelectorAll(".speed-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+      $("modeGroup").addEventListener("click", (event) => {
+        const btn = event.target.closest("button[data-mode]");
+        if (!btn) return;
+        state.mode = btn.dataset.mode;
+        document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderReader();
+      });
+      $("gameModeBtn").addEventListener("click", () => {
+        document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+        $("gameModeBtn").classList.add("active");
+        startGame(1);
+        const gameCard = $("gameSentence");
+        if (gameCard) gameCard.scrollIntoView({ block: "center", behavior: "smooth" });
+      });
+      $("audio").addEventListener("timeupdate", () => {
+        if (!state.lrc.length) return;
+        const active = getNearestLrcIndex($("audio").currentTime || 0);
+        const shouldScroll = !state.suppressLrcScrollOnce;
+        state.suppressLrcScrollOnce = false;
+        updateLrcWindow(active, shouldScroll);
+        handleLrcRepeatProgress();
+      });
+      $("prevSentenceBtn").addEventListener("click", () => moveSentence(-1));
+      $("nextSentenceBtn").addEventListener("click", () => moveSentence(1));
+      $("startGameBtn").addEventListener("click", () => startGame(1));
+      $("restartSentenceBtn").addEventListener("click", () => startGame(1));
+      $("skipSentenceBtn").addEventListener("click", () => moveSentence(1));
+      $("repeatAudioBtn").addEventListener("click", repeatCurrentAudio);
+      $("focusGameBtn").addEventListener("click", () => {
+        const nextState = !document.body.classList.contains("focus-game");
+        setFocusGameMode(nextState);
+        if (nextState && !state.game.active) startGame(1);
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && document.body.classList.contains("focus-game")) {
+          setFocusGameMode(false);
+        }
+      });
+    }
+
+    let savedTheme = "dark";
+    try {
+      savedTheme = localStorage.getItem("reciteTheme") || "dark";
+    } catch (error) {}
+    setTheme(savedTheme === "light" ? "light" : "dark");
+    bindEvents();
+    $("textInput").value = sampleText;
+    state.lrc = parseLrc(sampleLrc);
+    selectLesson("III-45").catch(() => loadText(sampleText));
+  </script>
+</body>
+</html>
