@@ -1515,8 +1515,6 @@ At the school gate, Tom meets a boy named Jack. Jack says hello and shows him th
 [00:35.00]Jack says hello and shows him the classroom.
 [00:40.00]Soon Tom knows that a new place can become familiar step by step.`;
 
-    let lessonInputTimer = null;
-
     const $ = (id) => document.getElementById(id);
 
     function showToast(message) {
@@ -2248,18 +2246,6 @@ At the school gate, Tom meets a boy named Jack. Jack says hello and shows him th
         setTheme(nextMode);
       });
       $("loadLessonLabel").addEventListener("click", () => selectLesson($("lessonNumber").value));
-      $("lessonNumber").addEventListener("input", () => {
-        clearTimeout(lessonInputTimer);
-        lessonInputTimer = setTimeout(() => {
-          const value = $("lessonNumber").value.trim();
-          if (value) selectLesson(value);
-        }, 450);
-      });
-      $("lessonNumber").addEventListener("keydown", (event) => {
-        clearTimeout(lessonInputTimer);
-        if (event.key === "Enter") selectLesson($("lessonNumber").value);
-      });
-      $("lessonNumber").addEventListener("change", () => selectLesson($("lessonNumber").value));
       $("sampleBtn").addEventListener("click", () => {
         const panel = document.querySelector(".utility-panel");
         if (panel) panel.classList.remove("open");
