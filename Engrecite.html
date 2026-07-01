@@ -970,6 +970,20 @@
       color: #334155;
     }
 
+    body.light-mode #lessonNumber,
+    #lessonNumber {
+      background: #ffffff;
+      color: #111827;
+      caret-color: #111827;
+    }
+
+    body:not(.light-mode) #lessonNumber {
+      background: #050b14;
+      color: #ffffff;
+      caret-color: #ffffff;
+      border-color: #274363;
+    }
+
     .game-header {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -996,6 +1010,12 @@
       padding: 2px 8px;
       font-size: 12px;
       white-space: nowrap;
+    }
+
+    #repeatAudioBtn.listening {
+      background: var(--amber);
+      color: #111827;
+      box-shadow: 0 0 0 2px rgba(251, 191, 36, .28);
     }
 
     .game-button-strip {
@@ -1336,7 +1356,7 @@
         </div>
       <div class="compact-toolbar">
         <button class="toolbar-label" id="loadLessonLabel" type="button">课程号</button>
-        <input id="lessonNumber" type="text" value="III-45" aria-label="课程编号" inputmode="text">
+        <input id="lessonNumber" type="text" value="III-01" aria-label="课程编号" inputmode="text">
         <div class="utility-panel" id="settingsPanel">
         <button class="settings-toggle" id="settingsToggle" type="button" aria-label="设置">
           <img src="settings-icon.png" alt="">
@@ -1373,7 +1393,7 @@
     <main class="main-panel">
       <div class="topbar">
         <div>
-          <h1 id="lessonTitle">Lesson 45</h1>
+          <h1 id="lessonTitle">Lesson 1</h1>
           <p class="muted" id="lessonSub">等待载入课文和音频</p>
         </div>
       </div>
@@ -1472,8 +1492,8 @@
 
   <script>
     const state = {
-      lesson: 45,
-      courseKey: "III-45",
+      lesson: 1,
+      courseKey: "III-01",
       rawText: "",
       sourceText: "",
       lessonMeta: { lessonLine: "", englishTitle: "", chineseTitle: "", wordsText: "", translationText: "" },
@@ -1484,6 +1504,12 @@
         index: 0,
         count: 0,
         max: 3
+      },
+      gameAudioLoop: {
+        active: false,
+        index: 0,
+        startTime: 0,
+        endTime: 0
       },
       suppressLrcScrollOnce: false,
       currentParagraph: 0,
@@ -2141,6 +2167,7 @@ At the school gate, Tom meets a boy named Jack. Jack says hello and shows him th
     }
 
     function moveSentence(delta, autoStartGame = false) {
+      if (state.gameAudioLoop.active) stopGameAudioLoop();
       const paragraph = currentParagraph();
       if (!paragraph) return;
       let p = state.currentParagraph;
@@ -2168,9 +2195,63 @@ At the school gate, Tom meets a boy named Jack. Jack says hello and shows him th
     }
 
     function repeatCurrentAudio() {
-      syncAudioToCurrentSentence();
       const audio = $("audio");
-      if (audio.src) audio.play().catch(() => showToast("请先手动允许音频播放"));
+      if (state.gameAudioLoop.active) {
+        stopGameAudioLoop();
+        return;
+      }
+      const index = Math.min(flatSentenceIndex(), state.lrc.length - 1);
+      const line = state.lrc[index];
+      if (!line || !Number.isFinite(line.time)) {
+        showToast("当前句没有LRC时间点");
+        return;
+      }
+      const next = state.lrc[index + 1];
+      const endTime = next && Number.isFinite(next.time)
+        ? next.time
+        : Math.min(audio.duration || line.time + 8, line.time + 8);
+      state.lrcRepeat.active = false;
+      state.gameAudioLoop = {
+        active: true,
+        index,
+        startTime: line.time,
+        endTime
+      };
+      setRepeatAudioButton(true);
+      syncSelectedPlaybackRate();
+      audio.currentTime = line.time;
+      highlightLrc(index);
+      audio.play().catch(() => {
+        stopGameAudioLoop();
+        showToast("请先手动允许音频播放");
+      });
+    }
+
+    function syncSelectedPlaybackRate() {
+      const activeSpeed = document.querySelector(".speed-btn.active[data-speed]");
+      const rate = activeSpeed ? Number(activeSpeed.dataset.speed) : $("audio").playbackRate || 1;
+      $("audio").playbackRate = Number.isFinite(rate) ? rate : 1;
+    }
+
+    function setRepeatAudioButton(active) {
+      const btn = $("repeatAudioBtn");
+      if (!btn) return;
+      btn.classList.toggle("listening", active);
+    }
+
+    function stopGameAudioLoop() {
+      state.gameAudioLoop.active = false;
+      $("audio").pause();
+      setRepeatAudioButton(false);
+    }
+
+    function handleGameAudioLoop() {
+      if (!state.gameAudioLoop.active) return;
+      const audio = $("audio");
+      if (audio.currentTime < state.gameAudioLoop.endTime - 0.06) return;
+      syncSelectedPlaybackRate();
+      audio.currentTime = state.gameAudioLoop.startTime;
+      audio.play().catch(() => stopGameAudioLoop());
     }
 
     function setTheme(mode) {
@@ -2193,6 +2274,7 @@ At the school gate, Tom meets a boy named Jack. Jack says hello and shows him th
       document.body.classList.toggle("focus-game", active);
       const btn = $("focusGameBtn");
       if (btn) btn.textContent = active ? "返回主页面" : "专注模式";
+      if (!active && state.gameAudioLoop.active) stopGameAudioLoop();
       if (active && document.documentElement.requestFullscreen && !document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(() => {});
       }
@@ -2285,6 +2367,7 @@ At the school gate, Tom meets a boy named Jack. Jack says hello and shows him th
         $("audio").playbackRate = Number(btn.dataset.speed);
         document.querySelectorAll(".speed-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
+        if (state.gameAudioLoop.active) syncSelectedPlaybackRate();
       });
       $("modeGroup").addEventListener("click", (event) => {
         const btn = event.target.closest("button[data-mode]");
@@ -2308,6 +2391,7 @@ At the school gate, Tom meets a boy named Jack. Jack says hello and shows him th
         state.suppressLrcScrollOnce = false;
         updateLrcWindow(active, shouldScroll);
         handleLrcRepeatProgress();
+        handleGameAudioLoop();
       });
       $("prevSentenceBtn").addEventListener("click", () => moveSentence(-1));
       $("nextSentenceBtn").addEventListener("click", () => moveSentence(1));
@@ -2335,7 +2419,7 @@ At the school gate, Tom meets a boy named Jack. Jack says hello and shows him th
     bindEvents();
     $("textInput").value = sampleText;
     state.lrc = parseLrc(sampleLrc);
-    selectLesson("III-45").catch(() => loadText(sampleText));
+    selectLesson("III-01").catch(() => loadText(sampleText));
   </script>
 </body>
 </html>
